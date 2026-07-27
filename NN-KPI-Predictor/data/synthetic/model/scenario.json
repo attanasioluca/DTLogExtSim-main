@@ -1,0 +1,460 @@
+{
+    "0": {
+        "processInstances": [],
+        "startDateTime": "2026-05-20T09:20:00",
+        "arrivalRateDistribution": {
+            "type": "NORMAL",
+            "mean": "9900",
+            "arg1": "2400",
+            "arg2": "",
+            "timeUnit": "seconds"
+        },
+        "timetables": [
+            {
+                "name": "A",
+                "rules": [
+                    {
+                        "fromTime": "09:00:00",
+                        "toTime": "17:00:00",
+                        "fromWeekDay": "MONDAY",
+                        "toWeekDay": "FRIDAY"
+                    }
+                ]
+            },
+            {
+                "name": "B",
+                "rules": [
+                    {
+                        "fromTime": "00:00:00",
+                        "toTime": "23:59:00",
+                        "fromWeekDay": "MONDAY",
+                        "toWeekDay": "SUNDAY"
+                    }
+                ]
+            }
+        ],
+        "resources": [
+            {
+                "name": "Pharmacist",
+                "totalAmount": "5",
+                "costPerHour": "45",
+                "timetableName": "A",
+                "setupTime": {
+                    "type": "",
+                    "mean": "",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": ""
+                },
+                "maxUsage": ""
+            },
+            {
+                "name": "Technician",
+                "totalAmount": "3",
+                "costPerHour": "30",
+                "timetableName": "A",
+                "setupTime": {
+                    "type": "",
+                    "mean": "",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": ""
+                },
+                "maxUsage": ""
+            },
+            {
+                "name": "Pharmacy Information System",
+                "totalAmount": "1",
+                "costPerHour": "10",
+                "timetableName": "B",
+                "setupTime": {
+                    "type": "",
+                    "mean": "",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": ""
+                },
+                "maxUsage": ""
+            }
+        ],
+        "elements": [
+            {
+                "elementId": "sid-532DCBA6-2EA6-435D-AA1E-8B5115299C25",
+                "worklistId": "Pharmacist",
+                "fixedCost": "5",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "60",
+                    "arg1": "10",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Pharmacist",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "sid-582150C6-EBEA-4A55-8E1D-7F0CA0B8CA54",
+                "worklistId": "Pharmacist",
+                "fixedCost": "",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "15",
+                    "arg1": "10",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Pharmacist",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "sid-2A37B8CB-663C-4265-839A-282F772E84CD",
+                "worklistId": "Pharmacist",
+                "fixedCost": "3",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "FIXED",
+                    "mean": "10",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Pharmacist",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "sid-E0879ACC-9536-498C-BA79-DA8902BE9B34",
+                "worklistId": "Pharmacist",
+                "fixedCost": "",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "120",
+                    "arg1": "25",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Pharmacist",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "sid-4AE2ED27-9C67-481A-9168-772F2443AC40",
+                "worklistId": "Pharmacist",
+                "fixedCost": "5",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "300",
+                    "arg1": "50",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Pharmacist",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "sid-C12EBC64-C7FC-447C-B752-63144C613AE3",
+                "worklistId": "Pharmacist",
+                "fixedCost": "3",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "240",
+                    "arg1": "50",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Pharmacist",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "sid-5C5825C2-B65C-45BE-A3ED-994F57BB36F6",
+                "worklistId": "Technician",
+                "fixedCost": "",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "300",
+                    "arg1": "20",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Technician",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "sid-6476CFCF-4619-47E1-AAB6-E759EBBCFA19",
+                "worklistId": "Technician",
+                "fixedCost": "2",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "FIXED",
+                    "mean": "30",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Technician",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "sid-4C7E683B-8A7A-4FC5-9BFE-7E06CB00DD9A",
+                "worklistId": "Technician",
+                "fixedCost": "2",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "FIXED",
+                    "mean": "30",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Technician",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "sid-B3B7EE72-DC71-4E7F-8294-7D1D0931D128",
+                "worklistId": "Pharmacy Information System",
+                "fixedCost": "2",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "FIXED",
+                    "mean": "10",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Pharmacy Information System",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "sid-A8BB4918-B634-4771-B746-709A2319BB3A",
+                "worklistId": "Pharmacist",
+                "fixedCost": "5",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "FIXED",
+                    "mean": "60",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Pharmacist",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "sid-8B110648-DDB2-4073-B0E5-58F8A11C3BC1",
+                "worklistId": "Technician",
+                "fixedCost": "1",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "3600",
+                    "arg1": "600",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Technician",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "sid-780ADF48-2A4E-474C-949B-400E8E093FAB",
+                "worklistId": "Pharmacy Information System",
+                "fixedCost": "5",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "FIXED",
+                    "mean": "60",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Pharmacy Information System",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            }
+        ],
+        "sequenceFlows": [
+            {
+                "elementId": "sid-428D3184-DFA0-41AA-86FF-D0911F3F6BAE",
+                "executionProbability": "0.9",
+                "types": []
+            },
+            {
+                "elementId": "sid-81149D62-486E-45F5-AF1C-888D56F64DFF",
+                "executionProbability": "0.1",
+                "types": []
+            },
+            {
+                "elementId": "sid-9BD78A7E-7829-4296-87A8-4D5880F9A9E1",
+                "executionProbability": "0.7",
+                "types": []
+            },
+            {
+                "elementId": "sid-2250656E-63A1-4A56-86DF-3EDC4F1F6F71",
+                "executionProbability": "0.75",
+                "types": []
+            },
+            {
+                "elementId": "sid-CF5B71CE-1177-42AA-8693-DF639F234B03",
+                "executionProbability": "0.25",
+                "types": []
+            },
+            {
+                "elementId": "Flow_0jquj8t",
+                "executionProbability": "0.6",
+                "types": []
+            },
+            {
+                "elementId": "Flow_1mgmyrx",
+                "executionProbability": "0.3",
+                "types": []
+            },
+            {
+                "elementId": "Flow_05apwno",
+                "executionProbability": "0.1",
+                "types": []
+            },
+            {
+                "elementId": "sid-C9AD342B-99B2-4051-9D7A-84F1D22335C6",
+                "executionProbability": "0.3",
+                "types": []
+            },
+            {
+                "elementId": "sid-175220B4-4FCB-4634-9B13-343FD66412F3",
+                "executionProbability": "0.7",
+                "types": []
+            },
+            {
+                "elementId": "sid-C8B88BBD-3777-4710-8767-88BDB819B739",
+                "executionProbability": ".8",
+                "types": []
+            },
+            {
+                "elementId": "sid-7E305348-8071-444C-BB7E-6A7120DBB4E8",
+                "executionProbability": "0.3",
+                "types": []
+            },
+            {
+                "elementId": "sid-F375F11E-4DF0-44E0-B987-8E897D6B773C",
+                "executionProbability": ".2",
+                "types": []
+            },
+            {
+                "elementId": "sid-4850B4E7-E98B-4627-9215-119F56E0D9E9",
+                "executionProbability": "0.15",
+                "types": []
+            },
+            {
+                "elementId": "sid-35D53189-B395-4F5D-93F9-6D59B3E318A0",
+                "executionProbability": "0.85",
+                "types": []
+            },
+            {
+                "elementId": "sid-1117D2C1-85E3-483D-B395-8F57D637456B",
+                "executionProbability": "0.9",
+                "types": []
+            },
+            {
+                "elementId": "sid-B94A29A4-715B-42C6-B0D1-4C622093B7C3",
+                "executionProbability": "0.1",
+                "types": []
+            }
+        ],
+        "catchEvents": {}
+    },
+    "logging_opt": "1",
+    "number_of_scenarios": 1,
+    "number_of_repetitions": 10
+}

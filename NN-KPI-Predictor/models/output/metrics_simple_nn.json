@@ -1,0 +1,62 @@
+[
+    {
+        "Data Source": "BIMP",
+        "Model Name": "Simple NN",
+        "Best Test Loss": 0.02525626277906083,
+        "MedAE": {
+            "cost": 836.3586742326515,
+            "cycle_time": 128.20955737305485,
+            "waiting_time": 223.3888724162971
+        },
+        "MAE": {
+            "cost": 1183.406327609781,
+            "cycle_time": 381.32176360449455,
+            "waiting_time": 544.6518992538582
+        },
+        "MedAE_Percentage": {
+            "cost": 2.501451132414137,
+            "cycle_time": 0.7177389146743728,
+            "waiting_time": 0.6488385640547754
+        }
+    },
+    {
+        "Data Source": "real",
+        "Model Name": "Simple NN",
+        "Best Test Loss": 0.12148243405460184,
+        "MedAE": {
+            "cost": 3117.7133463139908,
+            "cycle_time": 903.7370172417614,
+            "waiting_time": 859.1074475881105
+        },
+        "MAE": {
+            "cost": 4194.518765288369,
+            "cycle_time": 4910.215634657137,
+            "waiting_time": 4995.516928239175
+        },
+        "MedAE_Percentage": {
+            "cost": 4.2926317346373635,
+            "cycle_time": 3.1450176855466863,
+            "waiting_time": 3.6395363231142883
+        }
+    },
+    {
+        "Data Source": "synthetic",
+        "Model Name": "Simple NN",
+        "Best Test Loss": 0.02088804167543463,
+        "MedAE": {
+            "cost": 2182.777858914509,
+            "cycle_time": 441.8982354313521,
+            "waiting_time": 306.08448275323826
+        },
+        "MAE": {
+            "cost": 2875.3115951264094,
+            "cycle_time": 3031.791999662031,
+            "waiting_time": 2987.3443711647997
+        },
+        "MedAE_Percentage": {
+            "cost": 4.745512241685606,
+            "cycle_time": 1.8916387887636383,
+            "waiting_time": 1.6062638778955851
+        }
+    }
+]

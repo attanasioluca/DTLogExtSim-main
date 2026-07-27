@@ -1,0 +1,470 @@
+{
+    "0": {
+        "processInstances": [],
+        "startDateTime": "2026-07-01T00:00:00",
+        "arrivalRateDistribution": {
+            "type": "FIXED",
+            "mean": "7200",
+            "arg1": "",
+            "arg2": "",
+            "timeUnit": "seconds"
+        },
+        "timetables": [
+            {
+                "name": "AML Investigator_profile_calendar",
+                "rules": [
+                    {
+                        "fromTime": "07:00:00",
+                        "toTime": "15:00:00",
+                        "fromWeekDay": "MONDAY",
+                        "toWeekDay": "FRIDAY"
+                    }                
+                ]
+            },
+            {
+                "name": "Applicant_profile_calendar",
+                "rules": [
+                    {
+                        "fromTime": "07:00:00",
+                        "toTime": "15:00:00",
+                        "fromWeekDay": "MONDAY",
+                        "toWeekDay": "FRIDAY"
+                    }
+                ]
+            },
+            {
+                "name": "Appraiser_profile_calendar",
+                "rules": [
+                    {
+                        "fromTime": "07:00:00",
+                        "toTime": "15:00:00",
+                        "fromWeekDay": "MONDAY",
+                        "toWeekDay": "FRIDAY"
+                    }
+                ]
+            },
+            {
+                "name": "Clerk_profile_calendar",
+                "rules": [
+                    {
+                        "fromTime": "07:00:00",
+                        "toTime": "15:00:00",
+                        "fromWeekDay": "MONDAY",
+                        "toWeekDay": "FRIDAY"
+                    }
+                ]
+            },
+            {
+                "name": "Loan Officer_profile_calendar",
+                "rules": [
+                    {
+                        "fromTime": "07:00:00",
+                        "toTime": "15:00:00",
+                        "fromWeekDay": "MONDAY",
+                        "toWeekDay": "FRIDAY"
+                    }
+                ]
+            },
+            {
+                "name": "Senior Officer_profile_calendar",
+                "rules": [
+                    {
+                        "fromTime": "07:00:00",
+                        "toTime": "15:00:00",
+                        "fromWeekDay": "MONDAY",
+                        "toWeekDay": "FRIDAY"
+                    }
+                ]
+            }
+        ],
+        "resources": [
+            {
+                "name": "AML Investigator",
+                "totalAmount": "5",
+                "costPerHour": "20",
+                "timetableName": "AML Investigator_profile_calendar",
+                "setupTime": {
+                    "type": "",
+                    "mean": "",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": ""
+                },
+                "maxUsage": ""
+            },
+            {
+                "name": "Applicant",
+                "totalAmount": "50",
+                "costPerHour": "20",
+                "timetableName": "Applicant_profile_calendar",
+                "setupTime": {
+                    "type": "",
+                    "mean": "",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": ""
+                },
+                "maxUsage": ""
+            },
+            {
+                "name": "Appraiser",
+                "totalAmount": "5",
+                "costPerHour": "20",
+                "timetableName": "Appraiser_profile_calendar",
+                "setupTime": {
+                    "type": "",
+                    "mean": "",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": ""
+                },
+                "maxUsage": ""
+            },
+            {
+                "name": "Clerk",
+                "totalAmount": "8",
+                "costPerHour": "20",
+                "timetableName": "Clerk_profile_calendar",
+                "setupTime": {
+                    "type": "",
+                    "mean": "",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": ""
+                },
+                "maxUsage": ""
+            },
+            {
+                "name": "Loan Officer",
+                "totalAmount": "4",
+                "costPerHour": "20",
+                "timetableName": "Loan Officer_profile_calendar",
+                "setupTime": {
+                    "type": "",
+                    "mean": "",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": ""
+                },
+                "maxUsage": ""
+            },
+            {
+                "name": "Senior Officer",
+                "totalAmount": "2",
+                "costPerHour": "20",
+                "timetableName": "Senior Officer_profile_calendar",
+                "setupTime": {
+                    "type": "",
+                    "mean": "",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": ""
+                },
+                "maxUsage": ""
+            }
+        ],
+        "elements": [
+            {
+                "elementId": "node_fb6142cf-431e-49a2-8278-0ab153e033d9",
+                "worklistId": "",
+                "fixedCost": "0",
+                "costThreshold": "0",
+                "durationDistribution": {
+                    "type": "EXPONENTIAL",
+                    "mean": "150",
+                    "arg1": "",
+                    "arg2": "300",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Clerk",
+                        "amountNeeded": "1",
+                        "groupId": "0"
+                    }
+                    
+                ]
+            },
+            {
+                "elementId": "node_72f9366b-1a12-44b3-9d62-12151a3c986b",
+                "worklistId": "",
+                "fixedCost": "0",
+                "costThreshold": "0",
+                "durationDistribution": {
+                    "type": "GAMMA",
+                    "mean": "1821",
+                    "arg1": "3212406",
+                    "arg2": "1",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Appraiser",
+                        "amountNeeded": "1",
+                        "groupId": "1"
+                    }
+                ]
+            },
+            {
+                "elementId": "node_b7b69815-2300-45c0-b795-b10641e4997f",
+                "worklistId": "",
+                "fixedCost": "0",
+                "costThreshold": "0",
+                "durationDistribution": {
+                    "type": "FIXED",
+                    "mean": "3600",
+                    "arg1": "3600",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Applicant",
+                        "amountNeeded": "1",
+                        "groupId": "2"
+                    }
+                ]
+            },
+            {
+                "elementId": "node_e96c5ddd-ce95-4d1c-b20e-4236a5ede724",
+                "worklistId": "",
+                "fixedCost": "0",
+                "costThreshold": "0",
+                "durationDistribution": {
+                    "type": "GAMMA",
+                    "mean": "783",
+                    "arg1": "1086094",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Clerk",
+                        "amountNeeded": "1",
+                        "groupId": "0"
+                    }
+                ]
+            },
+            {
+                "elementId": "node_4aac3e09-f63b-4091-b1dc-382ae5799d24",
+                "worklistId": "",
+                "fixedCost": "0",
+                "costThreshold": "0",
+                "durationDistribution": {
+                    "type": "GAMMA",
+                    "mean": "263",
+                    "arg1": "81058",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Clerk",
+                        "amountNeeded": "1",
+                        "groupId": "0"
+                    }
+                ]
+            },
+            {
+                "elementId": "node_ec71f837-04b3-439c-8f5b-6c03f40ba4a9",
+                "worklistId": "",
+                "fixedCost": "0",
+                "costThreshold": "0",
+                "durationDistribution": {
+                    "type": "GAMMA",
+                    "mean": "115",
+                    "arg1": "19551",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Clerk",
+                        "amountNeeded": "1",
+                        "groupId": "0"
+                    }
+                ]
+            },
+            {
+                "elementId": "node_3fd5220c-2503-4b5d-a543-78dbeee830c9",
+                "worklistId": "",
+                "fixedCost": "0",
+                "costThreshold": "0",
+                "durationDistribution": {
+                    "type": "FIXED",
+                    "mean": "300",
+                    "arg1": "300",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Clerk",
+                        "amountNeeded": "1",
+                        "groupId": "0"
+                    }
+                ]
+            },
+            {
+                "elementId": "node_2dee630f-fe8e-4719-8b0b-546b1310b27d",
+                "worklistId": "",
+                "fixedCost": "0",
+                "costThreshold": "0",
+                "durationDistribution": {
+                    "type": "GAMMA",
+                    "mean": "1828",
+                    "arg1": "3748267",
+                    "arg2": "5",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "AML Investigator",
+                        "amountNeeded": "1",
+                        "groupId": "3"
+                    }
+                ]
+            },
+            {
+                "elementId": "node_4eb5f5ad-92ef-41f7-9814-f2df60a90301",
+                "worklistId": "",
+                "fixedCost": "0",
+                "costThreshold": "0",
+                "durationDistribution": {
+                    "type": "GAMMA",
+                    "mean": "615",
+                    "arg1": "718578",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Clerk",
+                        "amountNeeded": "1",
+                        "groupId": "0"
+                    }
+                ]
+            },
+            {
+                "elementId": "node_a9e6f8b0-d94c-42cc-ab3f-ed02e0faa62e",
+                "worklistId": "",
+                "fixedCost": "0",
+                "costThreshold": "0",
+                "durationDistribution": {
+                    "type": "EXPONENTIAL",
+                    "mean": "399",
+                    "arg1": "",
+                    "arg2": "2277",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Loan Officer",
+                        "amountNeeded": "1",
+                        "groupId": "4"
+                    }
+                ]
+            },
+            {
+                "elementId": "node_a265a23b-82f9-446b-8167-ad6c1655e313",
+                "worklistId": "",
+                "fixedCost": "0",
+                "costThreshold": "0",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "909",
+                    "arg1": "490",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Loan Officer",
+                        "amountNeeded": "1",
+                        "groupId": "4"
+                    }
+                ]
+            },
+            {
+                "elementId": "node_74bde187-ed90-4355-a7b0-2229bd9210e2",
+                "worklistId": "",
+                "fixedCost": "0",
+                "costThreshold": "0",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "919",
+                    "arg1": "481",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Senior Officer",
+                        "amountNeeded": "1",
+                        "groupId": "5"
+                    }
+                ]
+            }
+        ],
+        "sequenceFlows": [
+            {
+                "elementId": "node_722d515b-3882-4a29-b18b-a598d6bb8453",
+                "executionProbability": "0.9",
+                "types": []
+            },
+            {
+                "elementId": "node_5c9d3f96-445e-46b9-8274-ee203928e3a9",
+                "executionProbability": "0.1",
+                "types": []
+            },
+            {
+                "elementId": "node_77ec02e3-bf86-4f34-8170-b44c858d481d",
+                "executionProbability": "0.59",
+                "types": []
+            },
+            {
+                "elementId": "node_cc729d0c-eaa6-4d25-90d1-a53dd7037928",
+                "executionProbability": "0.41",
+                "types": []
+            },
+            {
+                "elementId": "node_dd461682-5672-4b53-acfd-80c35bcdefe2",
+                "executionProbability": "0.38",
+                "types": []
+            },
+            {
+                "elementId": "node_a6e4b462-2d80-4b44-bd3a-e250ec93c1db",
+                "executionProbability": "0.62",
+                "types": []
+            }
+        ],
+        "catchEvents": {}
+    },
+    "logging_opt": 0,
+    "number_of_scenarios": 1,
+    "number_of_repetitions": 1
+}

@@ -1,0 +1,160 @@
+{
+    "0": {
+        "processInstances": [],
+        "startDateTime": "2026-07-06T11:10:00",
+        "arrivalRateDistribution": {
+            "type": "EXPONENTIAL",
+            "mean": "1200",
+            "arg1": "",
+            "arg2": "",
+            "timeUnit": "seconds"
+        },
+        "timetables": [
+            {
+                "name": "Default",
+                "rules": [
+                    {
+                        "fromTime": "09:00:00",
+                        "toTime": "17:00:00",
+                        "fromWeekDay": "MONDAY",
+                        "toWeekDay": "FRIDAY"
+                    }
+                ]
+            }
+        ],
+        "resources": [
+            {
+                "name": "Clerk",
+                "totalAmount": "5",
+                "costPerHour": "25",
+                "timetableName": "Default",
+                "setupTime": { "type": "", "mean": "", "arg1": "", "arg2": "", "timeUnit": "" },
+                "maxUsage": ""
+            },
+            {
+                "name": "Credit Officer",
+                "totalAmount": "5",
+                "costPerHour": "50",
+                "timetableName": "Default",
+                "setupTime": { "type": "", "mean": "", "arg1": "", "arg2": "", "timeUnit": "" },
+                "maxUsage": ""
+            },
+            {
+                "name": "System",
+                "totalAmount": "1",
+                "costPerHour": "0",
+                "timetableName": "Default",
+                "setupTime": { "type": "", "mean": "", "arg1": "", "arg2": "", "timeUnit": "" },
+                "maxUsage": ""
+            }
+        ],
+        "elements": [
+            {
+                "elementId": "sid-4B24111F-B305-4608-9E12-744B47C44D0D",
+                "worklistId": "1",
+                "fixedCost": "",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "60",
+                    "arg1": "10",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [ { "resourceName": "Clerk", "amountNeeded": "1", "groupId": "" } ]
+            },
+            {
+                "elementId": "sid-D048D99D-F549-43B8-8ACB-5AE153B12B0F",
+                "worklistId": "1",
+                "fixedCost": "",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "120",
+                    "arg1": "20",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [ { "resourceName": "Clerk", "amountNeeded": "1", "groupId": "" } ]
+            },
+            {
+                "elementId": "sid-3744BAA1-9382-4FAB-B7FE-B6A333F10D25",
+                "worklistId": "3",
+                "fixedCost": "",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "FIXED",
+                    "mean": "0",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [ { "resourceName": "System", "amountNeeded": "1", "groupId": "" } ]
+            },
+            {
+                "elementId": "sid-622A1118-4766-43B2-A004-7DADE521982D",
+                "worklistId": "2",
+                "fixedCost": "",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "60",
+                    "arg1": "10",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [ { "resourceName": "Credit Officer", "amountNeeded": "1", "groupId": "" } ]
+            },
+            {
+                "elementId": "sid-02577CBF-ABA3-4EFD-9480-E1DFCF238B1C",
+                "worklistId": "2",
+                "fixedCost": "",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "EXPONENTIAL",
+                    "mean": "120",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [ { "resourceName": "Credit Officer", "amountNeeded": "1", "groupId": "" } ]
+            },
+            {
+                "elementId": "sid-503A048D-6344-446A-8D67-172B164CF8FA",
+                "worklistId": "2",
+                "fixedCost": "",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "60",
+                    "arg1": "10",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": []
+            }
+        ],
+        "sequenceFlows": [
+            { "elementId": "sid-8AE82A7B-75EE-401B-8ABE-279FB05A3946", "executionProbability": "0.2", "types": [] },
+            { "elementId": "sid-AFEC7074-8C12-43E2-A1FE-87D5CEF395C8", "executionProbability": "0.2", "types": [] },
+            { "elementId": "sid-AE313010-5715-438C-AD61-1C02F03DCF77", "executionProbability": "0.8", "types": [] },
+            { "elementId": "sid-789335C6-205C-4A03-9AD6-9655893C1FFB", "executionProbability": "0.8", "types": [] }
+        ],
+        "catchEvents": {}
+    },
+    "logging_opt": 0,
+    "number_of_scenarios": 1,
+    "number_of_repetitions": 1
+}

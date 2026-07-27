@@ -1,0 +1,62 @@
+[
+    {
+        "Data Source": "BIMP",
+        "Model Name": "Deep Network - Hypertuned",
+        "Best Test Loss": 0.006061833822644336,
+        "MedAE": {
+            "cost": 386.1400229990395,
+            "cycle_time": 93.93832541002485,
+            "waiting_time": 170.20666416509994
+        },
+        "MAE": {
+            "cost": 507.3008458731762,
+            "cycle_time": 195.46939268680387,
+            "waiting_time": 295.35270184611494
+        },
+        "MedAE_Percentage": {
+            "cost": 1.1476457805259914,
+            "cycle_time": 0.5256815213846959,
+            "waiting_time": 0.49442731478311797
+        }
+    },
+    {
+        "Data Source": "real",
+        "Model Name": "Deep Network - Hypertuned",
+        "Best Test Loss": 0.019140586510350166,
+        "MedAE": {
+            "cost": 607.8874121559493,
+            "cycle_time": 286.3924399211246,
+            "waiting_time": 335.39649830494454
+        },
+        "MAE": {
+            "cost": 858.9001476688353,
+            "cycle_time": 1727.0442968233056,
+            "waiting_time": 1827.088451032427
+        },
+        "MedAE_Percentage": {
+            "cost": 0.8369713654375232,
+            "cycle_time": 0.9966497679909158,
+            "waiting_time": 1.4208790083861904
+        }
+    },
+    {
+        "Data Source": "synthetic",
+        "Model Name": "Deep Network - Hypertuned",
+        "Best Test Loss": 0.006589406797519097,
+        "MedAE": {
+            "cost": 1958.944815864077,
+            "cycle_time": 233.90041981145623,
+            "waiting_time": 202.5826301021516
+        },
+        "MAE": {
+            "cost": 2638.117464457206,
+            "cycle_time": 2436.4407803923937,
+            "waiting_time": 2459.1628927423158
+        },
+        "MedAE_Percentage": {
+            "cost": 4.383013918915043,
+            "cycle_time": 0.9972473171483303,
+            "waiting_time": 1.0549652742043918
+        }
+    }
+]
