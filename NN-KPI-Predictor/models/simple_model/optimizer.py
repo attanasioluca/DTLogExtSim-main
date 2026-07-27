@@ -34,7 +34,7 @@ def evaluate_scenario(scenario_data, full_model, process_details, num_reps=15):
 # ==========================================
 # MAIN PIPELINE
 # ==========================================
-def main(SOURCE="synthetic", max_iterations=10000, max_param_change_pct=50.0, weight_cost=33.0, weight_cycle=33.0, weight_waiting=34.0, target_cost=None, target_cycle=None, target_waiting=None):
+def main(SOURCE="synthetic", max_iterations=10000, max_param_change_pct=50.0, weight_cost=33.0, weight_cycle=33.0, weight_waiting=34.0, target_cost=None, target_cycle=None, target_waiting=None, model_type="simple"):
     # --- CONFIGURATION ---
     BASE_FILE = f"data/{SOURCE}/model/scenario.json"
     MODEL_FILE = f"data/{SOURCE}/model/model.json"
@@ -94,19 +94,52 @@ def main(SOURCE="synthetic", max_iterations=10000, max_param_change_pct=50.0, we
 
     # STEP 2: NEURAL NETWORK OPTIMIZATION
     print("\n[2/4] Running Targeted Neural Network Optimizer...")
-    x_scaler = joblib.load(f"models/simple_model/output/{SOURCE}/x_scaler.pkl")
-    y_scaler = joblib.load(f"models/simple_model/output/{SOURCE}/y_scaler.pkl")
-    
-    device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
-    
-    model = PharmacySurrogate(x_scaler.n_features_in_).to(device)
-    model.load_state_dict(torch.load(f"models/simple_model/output/{SOURCE}/surrogate_model.pth", map_location=device, weights_only=True))
-    model.eval()
-    for param in model.parameters(): param.requires_grad = False
 
     # Feature Alignment
     X_df = df.drop(columns=NON_FEATURE_COLS)
     X_cols = X_df.columns.tolist()
+
+    model_dirs = {
+        "simple": "simple_model",
+        "complex": "complex_model",
+        "deep": "deep_network",
+        "lr": "simple_model"
+    }
+    target_dir = model_dirs.get(model_type, "simple_model")
+    scaler_path = f"models/{target_dir}/output/{SOURCE}/x_scaler.pkl"
+    yscaler_path = f"models/{target_dir}/output/{SOURCE}/y_scaler.pkl"
+    model_weight_path = f"models/{target_dir}/output/{SOURCE}/surrogate_model.pth"
+
+    if os.path.exists(scaler_path) and os.path.exists(model_weight_path):
+        x_scaler = joblib.load(scaler_path)
+        y_scaler = joblib.load(yscaler_path)
+    else:
+        scaler_path = f"models/simple_model/output/{SOURCE}/x_scaler.pkl"
+        x_scaler = joblib.load(scaler_path)
+        y_scaler = joblib.load(f"models/simple_model/output/{SOURCE}/y_scaler.pkl")
+        model_weight_path = f"models/simple_model/output/{SOURCE}/surrogate_model.pth"
+
+    if getattr(x_scaler, 'n_features_in_', None) != X_df.shape[1]:
+        raise ValueError(
+            f"Feature count mismatch: current dataset has {X_df.shape[1]} features, "
+            f"but the loaded surrogate model scaler expects {getattr(x_scaler, 'n_features_in_', 'unknown')} features as input. "
+            f"Please run Step 3 (Train Surrogate Model) to train the model on your current configuration before running optimization."
+        )
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+
+    if model_type == "complex" and os.path.exists(f"models/complex_model/output/{SOURCE}/surrogate_model.pth"):
+        from models.complex_model.hypertuned_model import PharmacySurrogate as ComplexPharmacySurrogate, DROPOUT_RATE
+        model = ComplexPharmacySurrogate(x_scaler.n_features_in_, DROPOUT_RATE=DROPOUT_RATE).to(device)
+    elif model_type == "deep" and os.path.exists(f"models/deep_network/output/{SOURCE}/surrogate_model.pth"):
+        from models.deep_network.hypertuned_model import DeepPharmacySurrogate
+        model = DeepPharmacySurrogate(input_size=x_scaler.n_features_in_, hidden_dim=512, num_blocks=6, dropout_rate=0.381).to(device)
+    else:
+        model = PharmacySurrogate(x_scaler.n_features_in_).to(device)
+
+    model.load_state_dict(torch.load(model_weight_path, map_location=device, weights_only=True))
+    model.eval()
+    for param in model.parameters(): param.requires_grad = False
     
     raw_min_array = X_df.min().values.reshape(1, -1)
     raw_max_array = X_df.max().values.reshape(1, -1)
@@ -404,6 +437,12 @@ if __name__ == "__main__":
         default=None,
         help="Target Waiting Time Goal"
     )
+    parser.add_argument(
+        "--model_type",
+        type=str,
+        default="simple",
+        help="Model architecture type (default: simple)"
+    )
 
     args = parser.parse_args()
     main(
@@ -415,5 +454,6 @@ if __name__ == "__main__":
         weight_waiting=args.weight_waiting,
         target_cost=args.target_cost,
         target_cycle=args.target_cycle,
-        target_waiting=args.target_waiting
+        target_waiting=args.target_waiting,
+        model_type=args.model_type
     )

@@ -144,7 +144,7 @@ def _run_training_thread(session_dir, train_num, model_type="simple"):
 
         proc.wait()
         if proc.returncode == 0:
-            STATUS["training"] = {"running": False, "progress": f"{model_type.upper()} Model training completed!", "error": None, "completed": True}
+            STATUS["training"] = {"running": False, "progress": f"{model_type.upper()} Model training completed!", "error": None, "completed": True, "model_type": model_type}
         else:
             err_msg = "".join(output_lines[-15:]).strip() or f"Training failed with exit code {proc.returncode}"
             STATUS["training"] = {"running": False, "progress": "", "error": err_msg, "completed": False}
@@ -233,7 +233,7 @@ def compute_baseline_kpis(upload_folder, num_reps=10):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-def _run_optimization_thread(session_dir, max_iterations, max_param_change_pct, weight_cost, weight_cycle, weight_waiting, target_cost=None, target_cycle=None, target_waiting=None):
+def _run_optimization_thread(session_dir, max_iterations, max_param_change_pct, weight_cost, weight_cycle, weight_waiting, target_cost=None, target_cycle=None, target_waiting=None, model_type="simple"):
     global STATUS
     STATUS["optimization"] = {"running": True, "progress": "Starting optimization...", "error": None, "completed": False}
     try:
@@ -249,7 +249,8 @@ def _run_optimization_thread(session_dir, max_iterations, max_param_change_pct, 
             "--max_param_change_pct", str(max_param_change_pct),
             "--weight_cost", str(weight_cost),
             "--weight_cycle", str(weight_cycle),
-            "--weight_waiting", str(weight_waiting)
+            "--weight_waiting", str(weight_waiting),
+            "--model_type", str(model_type)
         ]
         if target_cost is not None and float(target_cost) > 0:
             cmd.extend(["--target_cost", str(target_cost)])
@@ -286,14 +287,17 @@ def _run_optimization_thread(session_dir, max_iterations, max_param_change_pct, 
     except Exception as e:
         STATUS["optimization"] = {"running": False, "progress": "", "error": str(e), "completed": False}
 
-def start_optimization(upload_folder, max_iterations=10000, max_param_change_pct=50.0, weight_cost=33.0, weight_cycle=33.0, weight_waiting=34.0, target_cost=None, target_cycle=None, target_waiting=None):
+def start_optimization(upload_folder, max_iterations=10000, max_param_change_pct=50.0, weight_cost=33.0, weight_cycle=33.0, weight_waiting=34.0, target_cost=None, target_cycle=None, target_waiting=None, model_type=None):
     session_dir = get_session_dir(upload_folder)
     if STATUS["optimization"]["running"]:
         return {"status": "busy", "message": "Optimization is already running"}
 
+    if not model_type:
+        model_type = STATUS["training"].get("model_type", "simple")
+
     t = threading.Thread(
         target=_run_optimization_thread,
-        args=(session_dir, max_iterations, max_param_change_pct, weight_cost, weight_cycle, weight_waiting, target_cost, target_cycle, target_waiting)
+        args=(session_dir, max_iterations, max_param_change_pct, weight_cost, weight_cycle, weight_waiting, target_cost, target_cycle, target_waiting, model_type)
     )
     t.daemon = True
     t.start()

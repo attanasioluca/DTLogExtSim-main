@@ -637,6 +637,7 @@ def nnkpi_optimize():
     target_cost = data.get("target_cost")
     target_cycle = data.get("target_cycle")
     target_waiting = data.get("target_waiting")
+    model_type = data.get("model_type")
 
     res = nn_kpi_handler.start_optimization(
         UPLOAD_FOLDER,
@@ -647,7 +648,8 @@ def nnkpi_optimize():
         weight_waiting=weight_waiting,
         target_cost=target_cost,
         target_cycle=target_cycle,
-        target_waiting=target_waiting
+        target_waiting=target_waiting,
+        model_type=model_type
     )
     return jsonify(res)
 
