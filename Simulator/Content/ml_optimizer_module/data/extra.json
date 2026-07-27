@@ -1,0 +1,145 @@
+{
+    "0": {
+        "processInstances": [
+            {
+                "type": "default",
+                "count": "50"
+            }
+        ],
+        "startDateTime": "2026-05-05T12:17:00",
+        "arrivalRateDistribution": {
+            "type": "NORMAL",
+            "mean": "1000",
+            "arg1": "20",
+            "arg2": "",
+            "timeUnit": "seconds"
+        },
+        "timetables": [
+            {
+                "name": "Clerk",
+                "rules": [
+                    {
+                        "fromTime": "08:00:00",
+                        "toTime": "10:00:00",
+                        "fromWeekDay": "MONDAY",
+                        "toWeekDay": "FRIDAY"
+                    }
+                ]
+            },
+            {
+                "name": "Shipping",
+                "rules": [
+                    {
+                        "fromTime": "09:00:00",
+                        "toTime": "21:00:00",
+                        "fromWeekDay": "MONDAY",
+                        "toWeekDay": "SUNDAY"
+                    }
+                ]
+            }
+        ],
+        "resources": [
+            {
+                "name": "Clerk",
+                "totalAmount": "10",
+                "costPerHour": "50",
+                "timetableName": "Clerk",
+                "setupTime": {
+                    "type": "",
+                    "mean": "",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": ""
+                },
+                "maxUsage": ""
+            },
+            {
+                "name": "Warehouse",
+                "totalAmount": "5",
+                "costPerHour": "40",
+                "timetableName": "Shipping",
+                "setupTime": {
+                    "type": "",
+                    "mean": "",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": ""
+                },
+                "maxUsage": ""
+            }
+        ],
+        "elements": [
+            {
+                "elementId": "Activity_1turewf",
+                "worklistId": "",
+                "fixedCost": "30",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "NORMAL",
+                    "mean": "3600",
+                    "arg1": "300",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Warehouse",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "Activity_0fc9dhw",
+                "worklistId": "",
+                "fixedCost": "10",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "FIXED",
+                    "mean": "600",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Clerk",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            },
+            {
+                "elementId": "Activity_0dxqs1n",
+                "worklistId": "",
+                "fixedCost": "5",
+                "costThreshold": "",
+                "durationDistribution": {
+                    "type": "FIXED",
+                    "mean": "300",
+                    "arg1": "",
+                    "arg2": "",
+                    "timeUnit": "seconds"
+                },
+                "durationThreshold": "",
+                "durationThresholdTimeUnit": "",
+                "resourceIds": [
+                    {
+                        "resourceName": "Clerk",
+                        "amountNeeded": "1",
+                        "groupId": ""
+                    }
+                ]
+            }
+        ],
+        "sequenceFlows": [],
+        "catchEvents": {}
+    },
+    "logging_opt": 0,
+    "number_of_scenarios": 1,
+    "number_of_repetitions": 1
+}

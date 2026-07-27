@@ -1,0 +1,98 @@
+services:
+  simulator:
+    build:
+      context: ./Simulator
+    volumes:   
+      - uploads:/app/uploads
+      - download:/app/download
+    ports:
+      - "6661:6661"
+    networks:
+      - my_network
+    restart: unless-stopped
+
+  extractor:
+    build:
+      context: ./Extractor
+    volumes:   
+      - uploads:/app/uploads
+      - download:/app/download
+      - extractor:/app/extractor
+    ports:
+      - "6662:6662"
+    networks:
+      - my_network
+    restart: unless-stopped
+  
+
+  interface:
+    build:
+      context: ./Interface
+    volumes:
+      - uploads:/app/uploads
+      - download:/app/download
+      - extractor:/app/extractor
+      - ./NN-KPI-Predictor:/app/NN-KPI-Predictor:ro
+    ports:
+      - "6660:6660"
+    depends_on:
+      - simulator
+      - extractor
+    environment:
+      - HOST_ADDRESS=0.0.0.0
+      - HOST_PORT=6660
+      - SERVICE_NAME=Interface
+      - SIMULATOR_ADDRESS=simulator
+      - SIMULATOR_PORT=6661
+      - EXTRACTOR_ADDRESS=extractor
+      - EXTRACTOR_PORT=6662
+    networks:
+      - my_network
+
+# what if services
+  whatif_api:
+    build:
+      context: ./WhatIf
+      dockerfile: Dockerfile
+      target: api
+    environment:
+      - UPLOADS_DIR=/app/uploads
+    volumes:
+      - uploads:/app/uploads
+    networks:
+      - my_network
+    ports:
+      - "5003:5000"
+    restart: unless-stopped
+
+  whatif_ui:
+    build:
+      context: ./WhatIf
+      dockerfile: Dockerfile
+      target: ui
+      args:
+        # visibile al browser; punta alla porta esposta dell'API sul tuo host
+        NEXT_PUBLIC_API_URL: http://localhost:5003
+    environment:
+      # usato solo in SSR/side fetch dal container Next verso l'API via rete Docker
+      - INTERNAL_API_URL=http://whatif_api:5000
+      - NODE_ENV=production
+      - NEXT_PUBLIC_INTERFACE_HOME_URL=http://localhost:6660
+    depends_on:
+      - whatif_api
+    networks:
+      - my_network
+    ports:
+      - "3003:3000"
+    restart: unless-stopped
+
+
+volumes:
+  uploads:
+  logs:
+  download:
+  extractor:
+
+networks:
+  my_network:
+    driver: bridge

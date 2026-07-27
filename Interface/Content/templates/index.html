@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPMN Simulation</title>
+
+    <!-- Local Bootstrap CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+
+    <!-- Local jQuery (Full Version) -->
+    <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
+
+    <!-- Local Bootstrap Bundle (Includes Popper.js) -->
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <!-- Chart.js for NN metrics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-8">
+                <h1 class="text-center mb-4">BPMN Simulation</h1>
+
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs" id="serviceTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="extractor-tab" data-bs-toggle="tab" href="#extractor">Extractor</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="simulator-tab" data-bs-toggle="tab" href="#simulator">Simulator</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="whatif-tab" data-bs-toggle="tab" href="#whatif">What-If</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="nnkpi-tab" data-bs-toggle="tab" href="#nnkpi">NN-KPI Predictor</a>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content mt-3">
+                    <!-- Extractor Form -->
+                    <div class="tab-pane fade show active" id="extractor">
+                        <form id="extractorForm" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="backend_service" value="extractor">
+                            
+                            <div class="form-group my-4">
+                                <label for="xes_xes_extractor">XES File (Required):</label>
+                                <input type="file" class="form-control-file" id="xes_xes_extractor" name="xes_file" required>
+                            </div>
+
+                            <!-- Extractor Parameters -->
+                            <div class="form-group my-4">
+                                <label for="simthreshold">Similarity Threshold (optional, default=0.9):</label>
+                                <input type="number" step="0.01" class="form-control" id="simthreshold" name="simthreshold" placeholder="0.9" value="0.9">
+                            </div>
+
+                            <div class="form-group my-4">
+                                <label for="eta">Eta Value (optional, default=0.01):</label>
+                                <input type="number" step="0.001" class="form-control" id="eta" name="eta" placeholder="0.01" value="0.01">
+                            </div>
+
+                            <div class="form-group my-4">
+                                <label for="eps">Epsilon Value (optional, default=0.001):</label>
+                                <input type="number" step="0.001" class="form-control" id="eps" name="eps" placeholder="0.001" value="0.001">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">Send to Extractor</button>
+                        </form>
+                    </div>
+
+                    <!-- Simulator Form -->
+                    <div class="tab-pane fade" id="simulator">
+                        <form id="simulatorForm" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="backend_service" value="simulator">
+                            
+                            <div class="form-group my-4">
+                                <label for="bpmn_file_simulator">BPMN File (Required):</label>
+                                <input type="file" class="form-control-file" id="bpmn_file_simulator" name="bpmn_file" required>
+                            </div>
+
+                            <div class="form-group my-4">
+                                <label for="extra_simulator">Extra.json (Optional):</label>
+                                <input type="file" class="form-control-file" id="extra_simulator" name="extra">
+                            </div>
+
+                            <div class="form-group my-4">
+                                <label for="number_of_repetitions">Number of Repetitions (Optional, default=1):</label>
+                                <!-- avoid typing negative values and non-numeric characters  and no decimals-->
+                                <input type="number" class="form-control" id="number_of_repetitions" name="number_of_repetitions" placeholder="1" value="1" min="1" >
+                                <script>
+                                    document.getElementById("number_of_repetitions").addEventListener("input", function (event) {
+                                        if (event.target.value < 1) {
+                                            event.target.value = 1;
+                                        }
+                                        event.target.value = event.target.value.replace(/[^0-9]/g, '');
+                                        event.target.value = event.target.value.replace(/\./g, '');
+                                        event.target.value = event.target.value.replace(/,/g, '');
+                                    });
+                                </script>
+                            </div>
+
+                            <button type="submit" class="btn btn-success btn-block">Send to Simulator</button>
+                        </form>
+                    </div>
+
+                    <!-- What-If Form -->
+                    <div class="tab-pane fade" id="whatif" style="padding-bottom: 80px;">
+                    <div class="alert alert-secondary mt-3">
+                        <strong>What-If analysis</strong> — Select a <em>root</em> (a folder containing the BPMN)
+                        and one or more <em>scenarios folders</em>.
+                    </div>
+
+                    <!-- Upload ZIP (solo .zip) -->
+                    <div class="card border-primary mb-4 mt-4">
+                        <div class="card-header bg-primary text-white">
+                            <strong>Option 1 — Upload a ZIP folder from your local device</strong>
+                        </div>
+                        <div class="card-body">
+                            <form id="whatifZipForm" enctype="multipart/form-data">
+                            <div class="form-group my-3">
+                                <label for="whatif_zip">
+                                Upload ZIP (<code>root/{0..S}/{0..R}/log.xes</code> + <code>root/*.bpmn</code>):
+                                </label>
+                                <input type="file" class="form-control-file" id="whatif_zip" name="scenario_zip" accept=".zip" required />
+                                <br></br>
+                                <small class="form-text text-muted">
+                                The ZIP will be extracted into the shared volume and will appear below as a selectable root.
+                                </small>
+                            </div>
+                            <div class="form-group my-3">
+                                <label for="whatif_zip_name">Root name (optional):</label>
+                                <input type="text" class="form-control" id="whatif_zip_name" name="scenario_name" placeholder="e.g. store_original" />
+                            </div>
+                            <button id="btnUploadZip" type="submit" class="btn btn-outline-primary">Upload ZIP</button>
+                            <span id="zipUploading" class="text-muted ms-2" style="display:none;">Uploading…</span>
+                            <div id="zipMsg" class="mt-2"></div>
+                            </form>
+                        </div>
+                        </div>
+
+                    <!-- Select existing ROOT and SCENARIOS from volume -->
+                    <div class="card border-success mb-4">
+                        <div class="card-header bg-success text-white">
+                        <strong>Option 2 — Use a root already available in the shared volume</strong>
+                        </div>
+                        <div class="card-body">
+                        <form id="whatifStartForm" method="POST" action="/whatif/start">
+                            <div class="form-group my-3">
+                            <label for="whatif_root">Root (folder with BPMN):</label>
+                            <select class="form-control" id="whatif_root" name="root" required>
+                                {% if roots %}
+                                {% for r in roots %}
+                                    <option value="{{ r }}">{{ r }}</option>
+                                {% endfor %}
+                                {% else %}
+                                <option value="" disabled selected>No valid root found</option>
+                                {% endif %}
+                            </select>
+                            <small class="form-text text-muted">
+                                The root must contain the process' <code>.bpmn</code> file, the <code>extra.json</code> file and sub-folders for scenarios (0, 1, 2, …).
+                            </small>
+                            </div>
+
+                            <div class="form-group my-3">
+                            <label for="whatif_scenarios">
+                                Scenarios (select one or more):
+                            </label>
+                            <select
+                                class="form-control"
+                                id="whatif_scenarios"
+                                name="scenarios"
+                                multiple
+                                size="6"
+                                required
+                            ></select>
+                            <small class="form-text text-muted">
+                                Hold Ctrl/⌘ to select multiple scenarios.
+                            </small>
+                            </div>
+
+                            <button type="submit" class="btn btn-success">Start What-If</button>
+                        </form>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- NN-KPI Predictor Form -->
+                    <div class="tab-pane fade" id="nnkpi" style="padding-bottom: 80px;">
+                        <div class="alert alert-primary mt-3">
+                            <strong>NN-KPI-Predictor Module</strong> — Upload process model & scenario definitions, generate simulated training datasets, and train Neural Network KPI surrogates.
+                        </div>
+
+                        <!-- Step 1: Upload Model and Scenario -->
+                        <div class="card border-primary mb-4 mt-3">
+                            <div class="card-header bg-primary text-white">
+                                <strong>Step 1 — Upload Base Model & Scenario</strong>
+                            </div>
+                            <div class="card-body">
+                                <form id="nnkpiUploadForm" enctype="multipart/form-data">
+                                    <div class="form-group my-3">
+                                        <label for="nn_model_file">Process Model (<code>model.json</code>):</label>
+                                        <input type="file" class="form-control" id="nn_model_file" name="model_file" accept=".json" required />
+                                    </div>
+                                    <div class="form-group my-3">
+                                        <label for="nn_scenario_file">Base Scenario (<code>scenario.json</code>):</label>
+                                        <input type="file" class="form-control" id="nn_scenario_file" name="scenario_file" accept=".json" required />
+                                    </div>
+                                    <div class="form-group my-3">
+                                        <label for="nn_data_file">Precomputed Dataset CSV (<code>sim_data_waiting_times.csv</code> — Optional):</label>
+                                        <input type="file" class="form-control" id="nn_data_file" name="data_file" accept=".csv" />
+                                        <small class="form-text text-muted">Upload a precomputed simulation dataset to skip Step 2 and train the surrogate models directly.</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-outline-primary" id="btnUploadNNKPI">Upload Configuration / Dataset</button>
+                                    <div id="nnkpiUploadMsg" class="mt-2"></div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Parameter Adjustment & Simulation -->
+                        <div class="card border-success mb-4">
+                            <div class="card-header bg-success text-white">
+                                <strong>Step 2 — Adjust Simulation Parameters & Run Simulations</strong>
+                            </div>
+                            <div class="card-body">
+                                <form id="nnkpiSimForm">
+                                    <div class="row">
+                                        <div class="col-md-6 form-group my-2">
+                                            <label for="num_scenarios">Number of Mutated Scenarios:</label>
+                                            <input type="number" class="form-control" id="num_scenarios" name="num_scenarios" value="50" min="5" max="10000" />
+                                        </div>
+                                        <div class="col-md-6 form-group my-2">
+                                            <label for="workers_num">Parallel CPU Workers:</label>
+                                            <input type="number" class="form-control" id="workers_num" name="workers_num" value="2" min="1" max="16" />
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-success mt-3" id="btnRunSimulations">Run Data Gathering Simulations</button>
+                                    <div id="simStatusMsg" class="mt-3"></div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Train Neural Network Surrogate -->
+                        <div class="card border-info mb-4">
+                            <div class="card-header bg-info text-white">
+                                <strong>Step 3 — Train NN Surrogate Model & View Metrics</strong>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 form-group my-2">
+                                        <label for="model_type_select">Model Architecture:</label>
+                                        <select class="form-control" id="model_type_select" name="model_type">
+                                            <option value="simple">Simple Neural Network (Default)</option>
+                                            <option value="lr">Linear Regression (Baseline)</option>
+                                            <option value="complex">Complex Hypertuned NN</option>
+                                            <option value="deep">Deep Hypertuned Network</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 form-group my-2">
+                                        <label for="train_num">Training Samples Count:</label>
+                                        <input type="number" class="form-control" id="train_num" name="train_num" value="4000" min="10" />
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-info text-white mt-3" id="btnTrainNN">Train Surrogate Model</button>
+                                <div id="trainStatusMsg" class="mt-3"></div>
+
+                                <div id="nnResultsSection" class="mt-4" style="display:none;">
+                                    <h5>Surrogate Model Performance Metrics</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped mt-2">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Model Architecture</th>
+                                                    <th>KPI Target</th>
+                                                    <th>R² Score</th>
+                                                    <th>MAE</th>
+                                                    <th>MAPE / MedAE</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="metricsTableBody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Targeted Neural Network Optimizer -->
+                        <div class="card border-warning mb-4">
+                            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                                <strong>Step 4 — Targeted Neural Network Optimizer & ROI Validation</strong>
+                            </div>
+                            <div class="card-body">
+                                <!-- Baseline KPI Computation -->
+                                <div class="bg-light p-3 rounded mb-4 border">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0 text-dark">1. Compute Baseline Scenario KPIs</h6>
+                                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnCalcBaseline">⚡ Calculate Baseline KPIs (SimPy)</button>
+                                    </div>
+                                    <small class="form-text text-muted">Runs the baseline scenario through the simulator to measure ground-truth KPIs.</small>
+                                    <div id="baselineCalcStatusMsg" class="mt-2"></div>
+                                </div>
+
+                                <!-- Target Goal Setting (Baseline & % Change Fields) -->
+                                <h6 class="text-dark">2. Set Desired KPI Reduction / Target Goals</h6>
+                                <div class="row bg-white p-3 rounded mb-4 border shadow-sm">
+                                    <!-- Total Cost Target -->
+                                    <div class="col-md-4 form-group my-2">
+                                        <label class="font-weight-bold text-primary">Total Cost ($)</label>
+                                        <div class="text-muted small mb-1">Baseline: <strong id="baseCostDisplay">$0.00</strong></div>
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">Change</span>
+                                            <input type="number" class="form-control" id="target_cost_pct" value="-20" step="5" />
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">Target Goal</span>
+                                            <input type="number" class="form-control font-weight-bold" id="target_cost_input" placeholder="Cost Goal ($)" step="0.01" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Cycle Time Target -->
+                                    <div class="col-md-4 form-group my-2">
+                                        <label class="font-weight-bold text-primary">Cycle Time (Seconds)</label>
+                                        <div class="text-muted small mb-1">Baseline: <strong id="baseCycleDisplay">0.0s</strong></div>
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">Change</span>
+                                            <input type="number" class="form-control" id="target_cycle_pct" value="-20" step="5" />
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">Target Goal</span>
+                                            <input type="number" class="form-control font-weight-bold" id="target_cycle_input" placeholder="Cycle Goal (s)" step="0.1" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Waiting Time Target -->
+                                    <div class="col-md-4 form-group my-2">
+                                        <label class="font-weight-bold text-primary">Waiting Time (Seconds)</label>
+                                        <div class="text-muted small mb-1">Baseline: <strong id="baseWaitDisplay">0.0s</strong></div>
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">Change</span>
+                                            <input type="number" class="form-control" id="target_wait_pct" value="-20" step="5" />
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">Target Goal</span>
+                                            <input type="number" class="form-control font-weight-bold" id="target_wait_input" placeholder="Wait Goal (s)" step="0.1" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Priority Weights & Parameter Variation Constraints -->
+                                <h6 class="text-dark">3. Optimization Constraints & Priority Weights</h6>
+                                <div class="row bg-light p-3 rounded mb-3 border">
+                                    <div class="col-md-6 form-group my-2">
+                                        <label for="max_param_change_pct">Max Parameter Variation Limit (±%):</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="max_param_change_pct" name="max_param_change_pct" value="50" min="5" max="200" step="5" />
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="form-text text-muted">Constrains parameters from changing more than ±X% from original baseline values.</small>
+                                    </div>
+                                    <div class="col-md-6 form-group my-2">
+                                        <label for="optimize_iterations">Optimizer Epochs / Iterations:</label>
+                                        <input type="number" class="form-control" id="optimize_iterations" name="optimize_iterations" value="10000" min="500" max="50000" />
+                                    </div>
+
+                                    <div class="col-md-4 form-group mt-3">
+                                        <label for="weight_cost" class="text-dark font-weight-bold">Cost Priority Weight:</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="weight_cost" name="weight_cost" value="33" min="0" max="100" step="1" />
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 form-group mt-3">
+                                        <label for="weight_cycle" class="text-dark font-weight-bold">Cycle Time Priority Weight:</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="weight_cycle" name="weight_cycle" value="33" min="0" max="100" step="1" />
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 form-group mt-3">
+                                        <label for="weight_waiting" class="text-dark font-weight-bold">Waiting Time Priority Weight:</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="weight_waiting" name="weight_waiting" value="34" min="0" max="100" step="1" />
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn btn-warning btn-lg font-weight-bold text-dark w-100 mt-2" id="btnOptimizeNN">🚀 Run Targeted Optimizer</button>
+                                <div id="optimizeStatusMsg" class="mt-3"></div>
+
+                                <div id="nnOptimizeResultsSection" class="mt-4" style="display:none;">
+                                    <div id="optimizerActiveConfig" class="alert alert-secondary py-2 mb-3"></div>
+
+                                    <h5 class="text-primary">Validation & ROI Report</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover mt-2">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>KPI Metric</th>
+                                                    <th>Target Goal</th>
+                                                    <th>Baseline (True)</th>
+                                                    <th>NN Predicted</th>
+                                                    <th>Optimized (True)</th>
+                                                    <th>Finishing Delta</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="roiTableBody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <h5 class="text-success mt-4">Recommended Configuration Changes</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped mt-2">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Parameter Name</th>
+                                                    <th>Baseline Value</th>
+                                                    <th>Recommended Optimized Value</th>
+                                                    <th>Change (%)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="recommendationsTableBody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ensure Bootstrap Tabs Work Correctly
+        document.addEventListener("DOMContentLoaded", function () {
+            let tabTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tab"]'));
+            let tabList = tabTriggerList.map(function (tabTriggerEl) {
+                return new bootstrap.Tab(tabTriggerEl);
+            });
+
+            tabTriggerList.forEach(function (tabTriggerEl) {
+                tabTriggerEl.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    let tab = new bootstrap.Tab(tabTriggerEl);
+                    tab.show();
+                });
+            });
+        });
+
+        // Dynamically change form action based on selected tab 
+        document.getElementById("extractorForm").addEventListener("submit", function(event) {
+            this.action = "/extractor";
+        });
+
+        document.getElementById("simulatorForm").addEventListener("submit", function(event) {
+            this.action = "/simulator";
+        });
+
+        // ---- utilities ----
+        function clearSelect(sel) {
+            while (sel && sel.options && sel.options.length > 0) sel.remove(0);
+        }
+        function toUniqueSorted(arr, numeric=false) {
+            const out = [...new Set(arr)];
+            return numeric ? out.sort((a,b)=>Number(a)-Number(b)) : out.sort();
+        }
+
+        // ---- carica scenari per root selezionata (pulisce + deduplica) ----
+        async function loadScenariosForRoot(root) {
+            const sel = document.getElementById('whatif_scenarios');
+            if (!sel) return;
+            clearSelect(sel);
+            if (!root) return;
+
+            const r = await fetch(`/whatif/scenarios?root=${encodeURIComponent(root)}`, { cache: 'no-store' });
+            if (!r.ok) return;
+            let arr = await r.json();
+            arr = toUniqueSorted(arr, /*numeric=*/true);
+
+            for (const s of arr) {
+            const opt = document.createElement('option');
+            opt.value = s; opt.textContent = s;
+            sel.appendChild(opt);
+            }
+        }
+
+        // ---- ricarica roots + carica scenari della root selezionata ----
+        async function refreshRootsAndScenarios(selectRootValue) {
+            const rootSel = document.getElementById('whatif_root');
+            const scenSel = document.getElementById('whatif_scenarios');
+            if (!rootSel || !scenSel) return;
+
+            try {
+            const r = await fetch('/whatif/roots', { cache: 'no-store' });
+            if (!r.ok) throw new Error('Cannot load roots');
+            let roots = await r.json();
+            roots = toUniqueSorted(roots);
+
+            clearSelect(rootSel);
+            for (const rr of roots) {
+                const opt = document.createElement('option');
+                opt.value = rr; opt.textContent = rr;
+                rootSel.appendChild(opt);
+            }
+
+            // seleziona root passata (se esiste), altrimenti prima disponibile
+            if (selectRootValue && roots.includes(selectRootValue)) {
+                rootSel.value = selectRootValue;
+            } else if (roots.length) {
+                rootSel.value = roots[0];
+            }
+
+            // ora carica gli scenari per la root selezionata
+            await loadScenariosForRoot(rootSel.value);
+            } catch (e) {
+            console.warn(e);
+            }
+        }
+
+        // ---- BIND una sola volta agli eventi ----
+        if (!window.__whatif_bound) {
+            window.__whatif_bound = true;
+
+            // Cambio root: ricarica scenari
+            document.getElementById('whatif_root')?.addEventListener('change', (e) => {
+            loadScenariosForRoot(e.target.value);
+            });
+
+            // Submit Start What-If: valida almeno 1 scenario e crea hidden CSV
+            document.getElementById('whatifStartForm')?.addEventListener('submit', function (e) {
+                const sel = document.getElementById('whatif_scenarios');
+                const selected = Array.from(sel.selectedOptions).map(o => o.value);
+                if (selected.length < 1) {
+                    e.preventDefault();
+                    alert('Seleziona almeno uno scenario.');
+                    return false;
+                }
+                // crea/aggiorna hidden field
+                let hidden = this.querySelector('input[name="scenarios_csv"]');
+                if (!hidden) {
+                    hidden = document.createElement('input');
+                    hidden.type = 'hidden'; hidden.name = 'scenarios_csv';
+                    this.appendChild(hidden);
+                }
+                hidden.value = selected.join(',');
+            });
+
+
+            // Upload ZIP (via fetch) + refresh roots/scenari senza ricaricare la pagina
+            document.getElementById('whatifZipForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.currentTarget;
+            const btn = document.getElementById('btnUploadZip') || form.querySelector('button[type="submit"]');
+            const spin = document.getElementById('zipUploading');
+            const msg = document.getElementById('zipMsg');
+
+            if (msg) msg.innerHTML = '';
+            if (btn) btn.disabled = true;
+            if (spin) spin.style.display = 'inline';
+
+            try {
+                const fd = new FormData(form);
+                const res = await fetch('/whatif/upload-zip', { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (!res.ok || !data?.ok) {
+                if (msg) msg.innerHTML = `<div class="alert alert-danger">Upload failed: ${data?.message || res.status}</div>`;
+                return;
+                }
+
+                const newRoot = data.root;
+                if (msg) msg.innerHTML = `<div class="alert alert-success">ZIP uploaded ✔ — root: <code>${newRoot}</code></div>`;
+
+                // aggiorna roots + scenari selezionando la nuova root
+                await refreshRootsAndScenarios(newRoot);
+            } catch (err) {
+                if (msg) msg.innerHTML = `<div class="alert alert-danger">Unexpected error during upload.</div>`;
+                console.error(err);
+            } finally {
+                if (btn) btn.disabled = false;
+                if (spin) spin.style.display = 'none';
+            }
+            });
+
+            // Al primo load: se c'è già una root selezionata dal render server, sincronizza gli scenari
+            document.addEventListener('DOMContentLoaded', () => {
+            const rootSel = document.getElementById('whatif_root');
+            if (rootSel && rootSel.value) {
+                // Popola client-side una volta, sostituendo eventuali duplicazioni
+                refreshRootsAndScenarios(rootSel.value);
+            }
+            });
+            // --- NN-KPI Predictor JavaScript Handlers ---
+            document.getElementById('nnkpiUploadForm')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const msg = document.getElementById('nnkpiUploadMsg');
+                msg.innerHTML = '<div class="text-muted">Uploading configuration files...</div>';
+                try {
+                    const fd = new FormData(e.target);
+                    const res = await fetch('/nnkpi/upload', { method: 'POST', body: fd });
+                    const data = await res.json();
+                    if (res.ok && data.status === 'success') {
+                        msg.innerHTML = '<div class="alert alert-success">Configuration files uploaded successfully!</div>';
+                    } else {
+                        msg.innerHTML = `<div class="alert alert-danger">Error: ${data.error || 'Upload failed'}</div>`;
+                    }
+                } catch (err) {
+                    msg.innerHTML = `<div class="alert alert-danger">Upload failed: ${err}</div>`;
+                }
+            });
+
+            // Trigger Simulation Data Gathering
+            document.getElementById('btnRunSimulations')?.addEventListener('click', async () => {
+                const statusDiv = document.getElementById('simStatusMsg');
+                statusDiv.innerHTML = '<div class="alert alert-info">Initiating simulation data gathering...</div>';
+                const payload = {
+                    num_scenarios: parseInt(document.getElementById('num_scenarios').value) || 50,
+                    workers: parseInt(document.getElementById('workers_num').value) || 2
+                };
+                try {
+                    const res = await fetch('/nnkpi/simulate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        statusDiv.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+                        pollNNKPIStatus();
+                    } else {
+                        statusDiv.innerHTML = `<div class="alert alert-danger">Failed to start simulation.</div>`;
+                    }
+                } catch (err) {
+                    statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${err}</div>`;
+                }
+            });
+
+            // Trigger NN Training
+            document.getElementById('btnTrainNN')?.addEventListener('click', async () => {
+                const statusDiv = document.getElementById('trainStatusMsg');
+                statusDiv.innerHTML = '<div class="alert alert-info">Initiating Neural Network model training...</div>';
+                const payload = {
+                    train_num: parseInt(document.getElementById('train_num').value) || 4000,
+                    model_type: document.getElementById('model_type_select').value || 'simple'
+                };
+                try {
+                    const res = await fetch('/nnkpi/train', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        statusDiv.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+                        pollNNKPIStatus();
+                    } else {
+                        statusDiv.innerHTML = `<div class="alert alert-danger">Failed to start training.</div>`;
+                    }
+                } catch (err) {
+                    statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${err}</div>`;
+                }
+            });
+
+            // State for Baseline KPIs
+            window._baselineKPIs = { cost: 0, cycle_time: 0, waiting_time: 0 };
+
+            function updateTargetInputsFromPct() {
+                const b = window._baselineKPIs;
+                if (!b || (b.cost === 0 && b.cycle_time === 0 && b.waiting_time === 0)) return;
+
+                const costPct = parseFloat(document.getElementById('target_cost_pct').value) || 0;
+                const cyclePct = parseFloat(document.getElementById('target_cycle_pct').value) || 0;
+                const waitPct = parseFloat(document.getElementById('target_wait_pct').value) || 0;
+
+                document.getElementById('target_cost_input').value = Math.max(0, (b.cost * (1 + costPct / 100))).toFixed(2);
+                document.getElementById('target_cycle_input').value = Math.max(0, (b.cycle_time * (1 + cyclePct / 100))).toFixed(1);
+                document.getElementById('target_wait_input').value = Math.max(0, (b.waiting_time * (1 + waitPct / 100))).toFixed(1);
+            }
+
+            function updatePctFromTargetInputs() {
+                const b = window._baselineKPIs;
+                if (!b || (b.cost === 0 && b.cycle_time === 0 && b.waiting_time === 0)) return;
+
+                const cVal = parseFloat(document.getElementById('target_cost_input').value);
+                const cyVal = parseFloat(document.getElementById('target_cycle_input').value);
+                const wVal = parseFloat(document.getElementById('target_wait_input').value);
+
+                if (!isNaN(cVal) && b.cost > 0) {
+                    document.getElementById('target_cost_pct').value = (((cVal - b.cost) / b.cost) * 100).toFixed(1);
+                }
+                if (!isNaN(cyVal) && b.cycle_time > 0) {
+                    document.getElementById('target_cycle_pct').value = (((cyVal - b.cycle_time) / b.cycle_time) * 100).toFixed(1);
+                }
+                if (!isNaN(wVal) && b.waiting_time > 0) {
+                    document.getElementById('target_wait_pct').value = (((wVal - b.waiting_time) / b.waiting_time) * 100).toFixed(1);
+                }
+            }
+
+            ['target_cost_pct', 'target_cycle_pct', 'target_wait_pct'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', updateTargetInputsFromPct);
+            });
+            ['target_cost_input', 'target_cycle_input', 'target_wait_input'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', updatePctFromTargetInputs);
+            });
+
+            // Calculate Baseline KPIs
+            document.getElementById('btnCalcBaseline')?.addEventListener('click', async () => {
+                const statusDiv = document.getElementById('baselineCalcStatusMsg');
+                statusDiv.innerHTML = '<div class="text-info">⏳ Simulating baseline scenario... Please wait.</div>';
+                try {
+                    const res = await fetch('/nnkpi/baseline', { method: 'POST' });
+                    const data = await res.json();
+                    if (res.ok && data.status === 'success') {
+                        window._baselineKPIs = data.baseline;
+                        document.getElementById('baseCostDisplay').textContent = '$' + data.baseline.cost.toFixed(2);
+                        document.getElementById('baseCycleDisplay').textContent = data.baseline.cycle_time.toFixed(1) + 's';
+                        document.getElementById('baseWaitDisplay').textContent = data.baseline.waiting_time.toFixed(1) + 's';
+
+                        updateTargetInputsFromPct();
+                        statusDiv.innerHTML = '<div class="alert alert-success py-1 mt-1">✔ Baseline KPIs evaluated successfully!</div>';
+                    } else {
+                        statusDiv.innerHTML = `<div class="alert alert-danger py-1 mt-1">❌ ${data.message || 'Failed to calculate baseline'}</div>`;
+                    }
+                } catch (err) {
+                    statusDiv.innerHTML = `<div class="alert alert-danger py-1 mt-1">❌ Error: ${err}</div>`;
+                }
+            });
+
+            // Trigger NN Optimization
+            document.getElementById('btnOptimizeNN')?.addEventListener('click', async () => {
+                const statusDiv = document.getElementById('optimizeStatusMsg');
+                statusDiv.innerHTML = '<div class="alert alert-info">Initiating Targeted Neural Network Optimization...</div>';
+                const payload = {
+                    max_iterations: parseInt(document.getElementById('optimize_iterations').value) || 10000,
+                    max_param_change_pct: parseFloat(document.getElementById('max_param_change_pct').value) || 50.0,
+                    weight_cost: parseFloat(document.getElementById('weight_cost').value) || 33.0,
+                    weight_cycle: parseFloat(document.getElementById('weight_cycle').value) || 33.0,
+                    weight_waiting: parseFloat(document.getElementById('weight_waiting').value) || 34.0,
+                    target_cost: parseFloat(document.getElementById('target_cost_input').value) || null,
+                    target_cycle: parseFloat(document.getElementById('target_cycle_input').value) || null,
+                    target_waiting: parseFloat(document.getElementById('target_wait_input').value) || null
+                };
+                try {
+                    const res = await fetch('/nnkpi/optimize', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        statusDiv.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+                        pollNNKPIStatus();
+                    } else {
+                        statusDiv.innerHTML = `<div class="alert alert-danger">Failed to start optimization.</div>`;
+                    }
+                } catch (err) {
+                    statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${err}</div>`;
+                }
+            });
+
+            // Status Poller
+            async function pollNNKPIStatus() {
+                try {
+                    const res = await fetch('/nnkpi/status');
+                    if (!res.ok) return;
+                    const status = await res.json();
+
+                    // Update Sim status
+                    const simDiv = document.getElementById('simStatusMsg');
+                    if (status.simulation.running) {
+                        simDiv.innerHTML = `<div class="alert alert-info">⏳ Simulation Running: ${status.simulation.progress}</div>`;
+                        setTimeout(pollNNKPIStatus, 2000);
+                    } else if (status.simulation.completed) {
+                        simDiv.innerHTML = `<div class="alert alert-success">✔ ${status.simulation.progress}</div>`;
+                    } else if (status.simulation.error) {
+                        simDiv.innerHTML = `<div class="alert alert-danger">❌ Simulation Error: ${status.simulation.error}</div>`;
+                    }
+
+                    // Update Training status
+                    const trainDiv = document.getElementById('trainStatusMsg');
+                    if (status.training.running) {
+                        trainDiv.innerHTML = `<div class="alert alert-info">⏳ NN Training: ${status.training.progress}</div>`;
+                        setTimeout(pollNNKPIStatus, 2000);
+                    } else if (status.training.completed) {
+                        trainDiv.innerHTML = `<div class="alert alert-success">✔ ${status.training.progress}</div>`;
+                        loadNNResults();
+                    } else if (status.training.error) {
+                        trainDiv.innerHTML = `<div class="alert alert-danger">❌ Training Error: ${status.training.error}</div>`;
+                    }
+
+                    // Update Optimization status
+                    const optDiv = document.getElementById('optimizeStatusMsg');
+                    if (status.optimization) {
+                        if (status.optimization.running) {
+                            optDiv.innerHTML = `<div class="alert alert-info">⏳ NN Optimization: ${status.optimization.progress}</div>`;
+                            setTimeout(pollNNKPIStatus, 2000);
+                        } else if (status.optimization.completed) {
+                            optDiv.innerHTML = `<div class="alert alert-success">✔ ${status.optimization.progress}</div>`;
+                            loadNNOptimizerResults();
+                        } else if (status.optimization.error) {
+                            optDiv.innerHTML = `<div class="alert alert-danger">❌ Optimization Error: ${status.optimization.error}</div>`;
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error polling NN status:", err);
+                }
+            }
+
+            async function loadNNResults() {
+                try {
+                    const res = await fetch('/nnkpi/results');
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    if (data.status === 'success' && data.metrics && data.metrics.length > 0) {
+                        document.getElementById('nnResultsSection').style.display = 'block';
+                        const tbody = document.getElementById('metricsTableBody');
+                        let rows = '';
+                        data.metrics.forEach(m => {
+                            const modelName = m["Model Name"] || "Surrogate Model";
+                            rows += `
+                                <tr>
+                                    <td rowspan="3" class="align-middle font-weight-bold table-light">${modelName}</td>
+                                    <td>Total Cost</td>
+                                    <td>${m.R2_Score ? m.R2_Score.cost.toFixed(4) : 'N/A'}</td>
+                                    <td>${m.MAE ? '$' + m.MAE.cost.toFixed(2) : 'N/A'}</td>
+                                    <td>${m.MedAE_Percentage ? m.MedAE_Percentage.cost.toFixed(2) + '%' : 'N/A'}</td>
+                                </tr>
+                                <tr>
+                                    <td>Cycle Time</td>
+                                    <td>${m.R2_Score ? m.R2_Score.cycle_time.toFixed(4) : 'N/A'}</td>
+                                    <td>${m.MAE ? m.MAE.cycle_time.toFixed(1) + 's' : 'N/A'}</td>
+                                    <td>${m.MedAE_Percentage ? m.MedAE_Percentage.cycle_time.toFixed(2) + '%' : 'N/A'}</td>
+                                </tr>
+                                <tr>
+                                    <td>Waiting Time</td>
+                                    <td>${m.R2_Score ? m.R2_Score.waiting_time.toFixed(4) : 'N/A'}</td>
+                                    <td>${m.MAE ? m.MAE.waiting_time.toFixed(1) + 's' : 'N/A'}</td>
+                                    <td>${m.MedAE_Percentage ? m.MedAE_Percentage.waiting_time.toFixed(2) + '%' : 'N/A'}</td>
+                                </tr>
+                            `;
+                        });
+                        tbody.innerHTML = rows;
+                    }
+                } catch (err) {
+                    console.error("Error loading metrics:", err);
+                }
+            }
+
+            async function loadNNOptimizerResults() {
+                try {
+                    const res = await fetch('/nnkpi/optimize/results');
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    if (data.status === 'success' && data.results) {
+                        const r = data.results;
+                        document.getElementById('nnOptimizeResultsSection').style.display = 'block';
+                        
+                        // Active Settings Header
+                        if (r.settings) {
+                            const cfgDiv = document.getElementById('optimizerActiveConfig');
+                            if (cfgDiv) {
+                                cfgDiv.innerHTML = `<strong>Active Optimization Settings:</strong> Parameter Variation Limit: <code>±${r.settings.max_param_change_pct}%</code> | Priorities: <strong>Cost (${r.settings.weight_cost}%)</strong>, <strong>Cycle Time (${r.settings.weight_cycle}%)</strong>, <strong>Waiting Time (${r.settings.weight_waiting}%)</strong>`;
+                            }
+                        }
+
+                        // ROI Table
+                        const roiBody = document.getElementById('roiTableBody');
+                        roiBody.innerHTML = `
+                            <tr>
+                                <td><strong>Total Cost</strong></td>
+                                <td>$${r.target_goal.cost.toFixed(2)}</td>
+                                <td>$${r.baseline.cost.toFixed(2)}</td>
+                                <td>$${r.nn_predicted.cost.toFixed(2)}</td>
+                                <td>$${r.optimized.cost.toFixed(2)}</td>
+                                <td class="${r.deltas.end_cost <= 0 ? 'text-success font-weight-bold' : 'text-danger'}">${r.deltas.end_cost > 0 ? '+' : ''}$${r.deltas.end_cost.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cycle Time (Avg)</strong></td>
+                                <td>${r.target_goal.cycle_time.toFixed(1)}s</td>
+                                <td>${r.baseline.cycle_time.toFixed(1)}s</td>
+                                <td>${r.nn_predicted.cycle_time.toFixed(1)}s</td>
+                                <td>${r.optimized.cycle_time.toFixed(1)}s</td>
+                                <td class="${r.deltas.end_cycle <= 0 ? 'text-success font-weight-bold' : 'text-danger'}">${r.deltas.end_cycle > 0 ? '+' : ''}${r.deltas.end_cycle.toFixed(1)}s</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Waiting Time (Avg)</strong></td>
+                                <td>${r.target_goal.waiting_time.toFixed(1)}s</td>
+                                <td>${r.baseline.waiting_time.toFixed(1)}s</td>
+                                <td>${r.nn_predicted.waiting_time.toFixed(1)}s</td>
+                                <td>${r.optimized.waiting_time.toFixed(1)}s</td>
+                                <td class="${r.deltas.end_wait <= 0 ? 'text-success font-weight-bold' : 'text-danger'}">${r.deltas.end_wait > 0 ? '+' : ''}${r.deltas.end_wait.toFixed(1)}s</td>
+                            </tr>
+                        `;
+
+                        // Recommendations Table
+                        const recBody = document.getElementById('recommendationsTableBody');
+                        if (r.recommendations && r.recommendations.length > 0) {
+                            recBody.innerHTML = r.recommendations.map(rec => {
+                                const b = rec.baseline;
+                                const o = rec.optimized;
+                                const pctChange = b !== 0 ? (((o - b) / b) * 100).toFixed(1) : 'N/A';
+                                const pctBadge = pctChange > 0 ? `<span class="badge bg-warning text-dark">+${pctChange}%</span>` : (pctChange < 0 ? `<span class="badge bg-info">${pctChange}%</span>` : `<span class="badge bg-secondary">0%</span>`);
+                                return `
+                                    <tr>
+                                        <td><code>${rec.parameter}</code></td>
+                                        <td>${b}</td>
+                                        <td class="table-success"><strong>${o}</strong></td>
+                                        <td>${pctBadge}</td>
+                                    </tr>
+                                `;
+                            }).join('');
+                        } else {
+                            recBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No changes required. Baseline configuration already hits performance targets.</td></tr>';
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error loading optimizer results:", err);
+                }
+            }
+        }
+
+
+    </script>
+</body>
+</html>

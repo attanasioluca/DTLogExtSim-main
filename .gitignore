@@ -1,0 +1,46 @@
+# Python & Caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual Environments & Environment Variables
+env/
+.venv/
+.env
+.env.*
+!.env.example
+
+# IDEs & OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Project & Runtime Outputs
+uploads/
+temp/
+tmp/
+*.log
+*.sqlite
+*.sqlite3
+*.db
+
+# Machine Learning Checkpoints & Pickles (Generated Outputs)
+*.pkl
+*.pth
+*.h5
+*.onnx
+*.joblib
+
+# Java Compiled Artifacts
+*.class
+
+# Node / Frontend (if applicable)
+node_modules/
+dist/
+build/

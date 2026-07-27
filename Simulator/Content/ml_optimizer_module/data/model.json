@@ -1,0 +1,150 @@
+{
+    "diagram_attributes": {
+        "id": "BPMNDiagram_1",
+        "name": ""
+    },
+    "plane_attributes": {
+        "id": "BPMNPlane_1",
+        "bpmnElement": "Collaboration_0b0s891"
+    },
+    "sequence_flows": {
+        "Flow_1epqfdu": {
+            "name": "",
+            "sourceRef": "Gateway_0rj5ebp",
+            "targetRef": "Activity_1turewf"
+        },
+        "Flow_14ioi75": {
+            "name": "",
+            "sourceRef": "Activity_1turewf",
+            "targetRef": "Gateway_1uze62h"
+        },
+        "Flow_013rf5y": {
+            "name": "",
+            "sourceRef": "StartEvent_1e1ac3f",
+            "targetRef": "Gateway_0rj5ebp"
+        },
+        "Flow_153i0fd": {
+            "name": "",
+            "sourceRef": "Gateway_0rj5ebp",
+            "targetRef": "Activity_0fc9dhw"
+        },
+        "Flow_1bfm3nt": {
+            "name": "",
+            "sourceRef": "Activity_0fc9dhw",
+            "targetRef": "Activity_0dxqs1n"
+        },
+        "Flow_0jepl6u": {
+            "name": "",
+            "sourceRef": "Activity_0dxqs1n",
+            "targetRef": "Gateway_1uze62h"
+        },
+        "Flow_1gxaaf5": {
+            "name": "",
+            "sourceRef": "Gateway_1uze62h",
+            "targetRef": "Event_156pkgu"
+        }
+    },
+    "collaboration": {
+        "id": "Collaboration_0b0s891",
+        "participants": {
+            "Participant_1w6vm5e": {
+                "name": "Company",
+                "processRef": "Process_0j8mrc9",
+                "isHorizontal": "true",
+                "width": "800",
+                "height": "290",
+                "x": "152",
+                "y": "90"
+            }
+        },
+        "messageFlows": {}
+    },
+    "process_elements": {
+        "Process_0j8mrc9": {
+            "name": "Company",
+            "isClosed": "false",
+            "isExecutable": "false",
+            "processType": "None",
+            "node_ids": [
+                "Activity_1turewf",
+                "StartEvent_1e1ac3f",
+                "Gateway_0rj5ebp",
+                "Activity_0fc9dhw",
+                "Activity_0dxqs1n",
+                "Gateway_1uze62h",
+                "Event_156pkgu"
+            ],
+            "node_details": {
+                "Activity_1turewf": {
+                    "name": "Pack Order",
+                    "type": "task",
+                    "subtype": null,
+                    "attached_to": null,
+                    "previous": [],
+                    "next": [
+                        "Gateway_1uze62h"
+                    ]
+                },
+                "StartEvent_1e1ac3f": {
+                    "name": "Order Received",
+                    "type": "startEvent",
+                    "subtype": null,
+                    "attached_to": null,
+                    "previous": [],
+                    "next": [
+                        "Gateway_0rj5ebp"
+                    ]
+                },
+                "Gateway_0rj5ebp": {
+                    "name": "",
+                    "type": "parallelGateway",
+                    "subtype": null,
+                    "attached_to": null,
+                    "previous": [],
+                    "next": [
+                        "Activity_1turewf",
+                        "Activity_0fc9dhw"
+                    ]
+                },
+                "Activity_0fc9dhw": {
+                    "name": "Create Receipt",
+                    "type": "task",
+                    "subtype": null,
+                    "attached_to": null,
+                    "previous": [],
+                    "next": [
+                        "Activity_0dxqs1n"
+                    ]
+                },
+                "Activity_0dxqs1n": {
+                    "name": "Send Receipt",
+                    "type": "task",
+                    "subtype": null,
+                    "attached_to": null,
+                    "previous": [],
+                    "next": [
+                        "Gateway_1uze62h"
+                    ]
+                },
+                "Gateway_1uze62h": {
+                    "name": "",
+                    "type": "parallelGateway_close",
+                    "subtype": null,
+                    "attached_to": null,
+                    "previous": [],
+                    "next": [
+                        "Event_156pkgu"
+                    ]
+                },
+                "Event_156pkgu": {
+                    "name": "Order Fullfilled",
+                    "type": "endEvent",
+                    "subtype": null,
+                    "attached_to": null,
+                    "previous": [],
+                    "next": []
+                }
+            }
+        }
+    }
+}

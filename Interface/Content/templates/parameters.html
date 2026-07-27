@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation Parameters</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='parameters/parameters.css') }}">
+</head>
+<body>
+    <div class="container-fluid mt-3 mb-3">
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h1 class="mb-2">Multi-Scenario Simulation Parameters</h1>
+                <p class="text-muted mb-0">Configure multiple simulation scenarios with independent parameters</p>
+            </div>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </div>
+        <p class="mb-3">Attention: giving the same worklistId to tasks that use different resources will result in the simulation crashing. Only give a worklistId to tasks using identical resources</p>
+
+        <form method="POST" action="{{ url_for('parameters') }}" class="mt-4" id="main_form">
+            <input type="hidden" name="simulation_path" value="{{ simulation_path if simulation_path else '' }}">
+            <input type="hidden" name="simulation_no_ext" value="{{ simulation_no_ext if simulation_no_ext else '' }}">
+            <input type="hidden" name="flag_extra" value="{{ flag_extra }}">
+            <input type="hidden" name="number_of_repetitions" value="{{ number_of_repetitions }}">
+            <input type="hidden" name="number_of_scenarios" id="number_of_scenarios" value="1">
+
+            <!-- Scenario Tabs Navigation -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <ul class="nav nav-tabs flex-grow-1" id="scenarioTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="scenario-0-tab" data-bs-toggle="tab" 
+                                data-bs-target="#scenario-0" type="button" role="tab">
+                            Scenario 0
+                            <span class="tab-close-btn" onclick="removeScenario(0, event)" title="Remove scenario">×</span>
+
+                        </button>
+                    </li>
+                </ul>
+                <button type="button" class="btn btn-success ms-3" onclick="addScenario()">+ Add Scenario</button>
+                <button type="button" class="btn btn-outline-primary ms-2" onclick="duplicateScenario()">⧉ Duplicate Current</button>
+            </div>
+
+
+            <!-- Tab Content -->
+            <div class="tab-content scenario-tab-content" id="scenarioTabContent">
+                <!-- Scenario 0 Content (Template) -->
+                <div class="tab-pane fade show active" id="scenario-0" role="tabpanel">
+                    
+                    <!-- Scenario Header -->
+                    <div class="box">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label" for="scenario_0_start_date">Scenario Start Date and Time:</label>
+                                <input type="datetime-local" class="form-control" 
+                                       name="scenario_0_start_date" id="scenario_0_start_date" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="box">
+                        <h5>Inter-Arrival Time Distribution</h5>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="scenario_0_arrival_type">Type:</label>
+                                <select name="scenario_0_arrival_type" id="scenario_0_arrival_type" class="form-control" required>
+                                    <option value="FIXED">Fixed</option>
+                                    <option value="NORMAL">Normal</option>
+                                    <option value="EXPONENTIAL">Exponential</option>
+                                    <option value="UNIFORM">Uniform</option>
+                                    <option value="TRIANGULAR">Triangular</option>
+                                    <option value="LOGNORMAL">Log-Normal</option>
+                                    <option value="GAMMA">Gamma</option>
+                                    <option value="HISTOGRAM">Histogram</option>
+                                </select>
+                            </div> 
+                            <div class="col-md-2">
+                                <label for="scenario_0_arrival_mean">Mean:</label>
+                                <input type="number" name="scenario_0_arrival_mean" id="scenario_0_arrival_mean" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="scenario_0_arrival_arg1">Arg1:</label>
+                                <input type="number" name="scenario_0_arrival_arg1" id="scenario_0_arrival_arg1" class="form-control">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="scenario_0_arrival_arg2">Arg2:</label>
+                                <input type="number" name="scenario_0_arrival_arg2" id="scenario_0_arrival_arg2" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="scenario_0_arrival_time_unit">Time Unit:</label>
+                                <select name="scenario_0_arrival_time_unit" id="scenario_0_arrival_time_unit" class="form-control">
+                                    <option value="seconds">Seconds</option>
+                                    <option value="minutes">Minutes</option>
+                                    <option value="hours">Hours</option>
+                                    <option value="days">Days</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div> 
+
+                    <!-- Process Instances -->
+                    <div class="box">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Process Instances</h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    onclick="addInstanceGroup(0)">+ Add Instance Type</button>
+                        </div>
+                        <div id="instances-container-0">
+                            <!-- Instances will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Process Timetables -->
+                    <div class="box">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Process Timetables</h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    onclick="addTimetable(0)">+ Add Timetable</button>
+                        </div>
+                        <div id="timetables-container-0">
+                            <!-- Timetables will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Process Resources -->
+                    <div class="box">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Process Resources</h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    onclick="addResource(0)">+ Add Resource</button>
+                        </div>
+                        <div id="resources-container-0">
+                            <!-- Resources will be added here -->
+                        </div>
+                    </div>
+
+                    <div class="box">
+                        <h5 class="mb-3">BPMN Elements Configuration</h5>
+                        <div id="elements-container-0">
+                            {% for process_id, process_data in bpmn_dict['process_elements'].items() %}
+                                <h6 class="mt-4">Pool: {{ process_data.get('name', process_id) }} (ID: {{ process_id }})</h6>
+
+                                {% macro render_element(node_id, node_data, process_id, scenario_idx) %}
+                                <div class="element-group mb-3 p-3 border rounded bg-light">
+                                    <h6>
+                                        {% if node_data['type'] == 'task' %}
+                                            Task:
+                                        {% else %}
+                                            {{ node_data['type'] }}:
+                                        {% endif %}
+                                        {{ node_data['name'] }} (ID: {{ node_id }})
+                                    </h6>
+                                    <div class="row">
+                                        <div class="form-group col-md-4">
+                                            <label for="scenario_{{ scenario_idx }}_worklistId_{{ node_id }}">Worklist ID:</label>
+                                            <input type="text" class="form-control form-control-sm" 
+                                                    name="scenario_{{ scenario_idx }}_worklistId_{{ node_id }}"
+                                                    id="scenario_{{ scenario_idx }}_worklistId_{{ node_id }}">
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <label for="scenario_{{ scenario_idx }}_fixedCost_{{ node_id }}">Fixed Cost:</label>
+                                            <input type="number" step="any" class="form-control form-control-sm" 
+                                                    name="scenario_{{ scenario_idx }}_fixedCost_{{ node_id }}"
+                                                    id="scenario_{{ scenario_idx }}_fixedCost_{{ node_id }}">
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <label for="scenario_{{ scenario_idx }}_costThreshold_{{ node_id }}">Cost Threshold:</label>
+                                            <input type="number" step="any" class="form-control form-control-sm" 
+                                                    name="scenario_{{ scenario_idx }}_costThreshold_{{ node_id }}"
+                                                    id="scenario_{{ scenario_idx }}_costThreshold_{{ node_id }}">
+                                        </div>
+                                    </div>
+                                    <p class="mb-2 mt-3 fw-bold">Duration Distribution:</p>
+                                        <div class="row">
+                                            <div class="form-group col-md-3">
+                                                <label for="scenario_{{ scenario_idx }}_durationType_{{ node_id }}">Type:</label>
+                                                <select class="form-control form-control-sm duration-type" 
+                                                        name="scenario_{{ scenario_idx }}_durationType_{{ node_id }}"
+                                                        id="scenario_{{ scenario_idx }}_durationType_{{ node_id }}"
+                                                        data-element-id="{{ node_id }}" data-scenario="{{ scenario_idx }}">
+                                                    <option value="FIXED">Fixed</option>
+                                                    <option value="NORMAL">Normal</option>
+                                                    <option value="EXPONENTIAL">Exponential</option>
+                                                    <option value="UNIFORM">Uniform</option>
+                                                    <option value="TRIANGULAR">Triangular</option>
+                                                    <option value="LOGNORMAL">Log-Normal</option>
+                                                    <option value="GAMMA">Gamma</option>
+                                                    <option value="HISTOGRAM">Histogram</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <label for="scenario_{{ scenario_idx }}_durationMean_{{ node_id }}">Mean:</label>
+                                                <input type="number" step="any" class="form-control form-control-sm" 
+                                                        name="scenario_{{ scenario_idx }}_durationMean_{{ node_id }}" 
+                                                        id="scenario_{{ scenario_idx }}_durationMean_{{ node_id }}">
+                                            </div>
+                                            <div class="form-group col-md-3 duration-param-arg1" style="display: none;">
+                                                <label for="scenario_{{ scenario_idx }}_durationArg1_{{ node_id }}">Arg1:</label>
+                                                <input type="number" step="any" class="form-control form-control-sm" 
+                                                        name="scenario_{{ scenario_idx }}_durationArg1_{{ node_id }}"
+                                                        id="scenario_{{ scenario_idx }}_durationArg1_{{ node_id }}">
+                                            </div>
+                                            <div class="form-group col-md-3 duration-param-arg2" style="display: none;">
+                                                <label for="scenario_{{ scenario_idx }}_durationArg2_{{ node_id }}">Arg2:</label>
+                                                <input type="number" step="any" class="form-control form-control-sm" 
+                                                        name="scenario_{{ scenario_idx }}_durationArg2_{{ node_id }}"
+                                                        id="scenario_{{ scenario_idx }}_durationArg2_{{ node_id }}">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="form-group col-md-4">
+                                                <label for="scenario_{{ scenario_idx }}_durationTimeUnit_{{ node_id }}">Time Unit:</label>
+                                                <select class="form-control form-control-sm" 
+                                                        name="scenario_{{ scenario_idx }}_durationTimeUnit_{{ node_id }}"
+                                                        id="scenario_{{ scenario_idx }}_durationTimeUnit_{{ node_id }}">
+                                                    <option value="seconds">Seconds</option>
+                                                    <option value="minutes">Minutes</option>
+                                                    <option value="hours">Hours</option>
+                                                    <option value="days">Days</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <label for="scenario_{{ scenario_idx }}_durationThreshold_{{ node_id }}">Duration Threshold:</label>
+                                                <input type="number" step="any" class="form-control form-control-sm" 
+                                                        name="scenario_{{ scenario_idx }}_durationThreshold_{{ node_id }}"
+                                                        id="scenario_{{ scenario_idx }}_durationThreshold_{{ node_id }}">
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <label for="scenario_{{ scenario_idx }}_durationThresholdTimeUnit_{{ node_id }}">Threshold Time Unit:</label>
+                                                <select class="form-control form-control-sm" 
+                                                        name="scenario_{{ scenario_idx }}_durationThresholdTimeUnit_{{ node_id }}"
+                                                        id="scenario_{{ scenario_idx }}_durationThresholdTimeUnit_{{ node_id }}">
+                                                    <option value="seconds">Seconds</option>
+                                                    <option value="minutes">Minutes</option>
+                                                    <option value="hours">Hours</option>
+                                                    <option value="days">Days</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <p class="mb-2 mt-3 fw-bold">Resources:</p>
+                                        <div class="element-resources-container-{{ scenario_idx }}-{{ node_id }}">
+                                            <!-- Resources will be added via JS if needed -->
+                                        </div>
+                                        <button type="button" class="btn btn-secondary btn-sm" 
+                                                onclick="addElementResource({{ scenario_idx }}, '{{ node_id }}')">+ Add Resource</button>
+                                    </div>
+                                    {% endmacro %}
+
+                                {% for node_id, node_data in process_data['node_details'].items() %}
+                                    {% if node_data['type'] == 'task' %}
+                                        {{ render_element(node_id, node_data, process_id, 0) }}
+                                    {% elif node_data['type'] == 'subProcess' %}
+                                        {% for sub_node_id, sub_node_data in node_data['subprocess_details'].items() %}
+                                            {% if sub_node_data['type'] == 'task' %}
+                                                {{ render_element(sub_node_id, sub_node_data, process_id, 0) }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+
+                    </div>
+
+                    <!-- XOR and Inclusive Gateways -->
+                    <div class="box">
+                        <h5 class="mb-3">XOR and Inclusive Gateways</h5>
+                        <div id="gateways-container-0">
+                            {% for process_id, process_data in bpmn_dict['process_elements'].items() %}
+                                {% set seen_gw = [] %}
+                                {% for flow_id, flow_data in bpmn_dict['sequence_flows'].items() %}
+                                    {% set source_id = flow_data['sourceRef'] %}
+                                    {% set source_node = process_data['node_details'].get(source_id) %}
+                                    {% if not source_node %}
+                                        {% for node_id, node_data in process_data['node_details'].items() %}
+                                            {% if node_data['type'] == 'subProcess' and source_id in node_data.get('subprocess_details', {}) %}
+                                                {% set source_node = node_data['subprocess_details'][source_id] %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+
+                                    {% if source_node and source_node['type'] in ['exclusiveGateway', 'inclusiveGateway'] and source_id not in seen_gw %}
+                                        {% set outgoing = bpmn_dict['sequence_flows'].items() | selectattr('1.sourceRef', 'equalto', source_id) | list %}
+                                        {% if outgoing | length >= 2 %}
+                                            {% if seen_gw.append(source_id) %}{% endif %}
+                                            {% set gw_type = 'Exclusive Gateway' if source_node['type'] == 'exclusiveGateway' else 'Inclusive Gateway' %}
+
+                                            {# --- un blocco per gateway --- #}
+                                            <div class="gateway-group mb-4 box" data-process-id="{{ process_id }}">
+                                                <h6 class="mb-1">{{ gw_type }}: <strong>{{ source_node['name'] or source_id }}</strong></h6>
+                                                <small class="text-muted">Gateway ID: <code>{{ source_id }}</code></small>
+
+                                                {# --- un sotto-blocco per ogni branch uscente --- #}
+                                                {% for fid, fd in bpmn_dict['sequence_flows'].items() %}
+                                                    {% if fd['sourceRef'] == source_id %}
+                                                        {% set target_id = fd['targetRef'] %}
+                                                        {% set target_node = process_data['node_details'].get(target_id) %}
+                                                        {% if not target_node %}
+                                                            {% for node_id, node_data in process_data['node_details'].items() %}
+                                                                {% if node_data['type'] == 'subProcess' and target_id in node_data.get('subprocess_details', {}) %}
+                                                                    {% set target_node = node_data['subprocess_details'][target_id] %}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                        {% set target_name = target_node['name'] if target_node and target_node['name'] else target_id %}
+
+                                                        <div class="mt-3 p-3 border rounded" style="background:#f8f9fa;" data-flow-id="{{ fid }}">
+                                                            <div class="mb-2">
+                                                                <span class="fw-semibold">Branch:</span>
+                                                                arc <code>{{ fid }}</code> &rarr; <strong>{{ target_name }}</strong>
+                                                                {% if target_node %}<span class="text-muted ms-1">({{ target_node['type'] }})</span>{% endif %}
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="form-group col-md-6">
+                                                                    <label for="scenario_0_executionProbability_{{ fid }}">Execution Probability (0 to 1):</label>
+                                                                    <input type="number" step="0.01" min="0" max="1" class="form-control"
+                                                                           id="scenario_0_executionProbability_{{ fid }}"
+                                                                           name="scenario_0_executionProbability_{{ fid }}" required>
+                                                                </div>
+                                                                <div class="instance-types-container col-md-6" data-flow-id="{{ fid }}" data-scenario="0">
+                                                                    <div class="instance-type-input row mb-2">
+                                                                        <div class="form-group">
+                                                                            <label>Forced Instance Types:</label>
+                                                                            <select class="form-control"
+                                                                                    id="scenario_0_forcedInstanceType_{{ fid }}_1"
+                                                                                    name="scenario_0_forcedInstanceType_{{ fid }}_1">
+                                                                                <option value=""></option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <button type="button" class="btn btn-secondary btn-sm add-instance-type"
+                                                                    data-flow-id="{{ fid }}"
+                                                                    data-scenario="0">Add Instance Type</button>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+
+                    <!-- Catch Events -->
+                    <div class="box">
+                        <h5 class="mb-3">Catch Events (excluding Message Catch Events)</h5>
+                        <div id="catch-events-container-0">
+                            {% for process_id, process_data in bpmn_dict['process_elements'].items() %}
+                                {% for node_id, node_data in process_data['node_details'].items() %}
+                                    {% if node_data['type'] in ['intermediateCatchEvent', 'startEvent'] and node_data.get('subtype') not in ['messageEventDefinition', None] %}
+                                        <div class="catch-event-group mb-3 p-3 border rounded bg-light">
+                                            <h6>
+                                                {% if node_data['type'] == 'startEvent' %}
+                                                    Start Event:
+                                                {% else %}
+                                                    Intermediate Catch Event:
+                                                {% endif %}
+                                                {{ node_data['name'] }} (ID: {{ node_id }})
+                                            </h6>
+                                            <p class="mb-2 mt-3 fw-bold">Duration Distribution:</p>
+                                            <div class="row">
+                                                <div class="form-group col-md-3">
+                                                    <label for="scenario_0_catchEventDurationType_{{ node_id }}">Type:</label>
+                                                    <select class="form-control form-control-sm catch-event-duration-type" 
+                                                            name="scenario_0_catchEventDurationType_{{ node_id }}"
+                                                            id="scenario_0_catchEventDurationType_{{ node_id }}"
+                                                            data-element-id="{{ node_id }}" data-scenario="0">
+                                                        <option value="FIXED">Fixed</option>
+                                                        <option value="NORMAL">Normal</option>
+                                                        <option value="EXPONENTIAL">Exponential</option>
+                                                        <option value="UNIFORM">Uniform</option>
+                                                        <option value="TRIANGULAR">Triangular</option>
+                                                        <option value="LOGNORMAL">Log-Normal</option>
+                                                        <option value="GAMMA">Gamma</option>
+                                                        <option value="HISTOGRAM">Histogram</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col-md-3">
+                                                    <label for="scenario_0_catchEventDurationMean_{{ node_id }}">Mean:</label>
+                                                    <input type="number" step="any" class="form-control form-control-sm" 
+                                                        name="scenario_0_catchEventDurationMean_{{ node_id }}"
+                                                        id="scenario_0_catchEventDurationMean_{{ node_id }}">
+                                                </div>
+                                                <div class="form-group col-md-3 catch-event-duration-param-arg1" style="display: none;">
+                                                    <label for="scenario_0_catchEventDurationArg1_{{ node_id }}">Arg1:</label>
+                                                    <input type="number" step="any" class="form-control form-control-sm" 
+                                                        name="scenario_0_catchEventDurationArg1_{{ node_id }}"
+                                                        id="scenario_0_catchEventDurationArg1_{{ node_id }}">
+                                                </div>
+                                                <div class="form-group col-md-3 catch-event-duration-param-arg2" style="display: none;">
+                                                    <label for="scenario_0_catchEventDurationArg2_{{ node_id }}">Arg2:</label>
+                                                    <input type="number" step="any" class="form-control form-control-sm" 
+                                                        name="scenario_0_catchEventDurationArg2_{{ node_id }}"
+                                                        id="scenario_0_catchEventDurationArg2_{{ node_id }}">
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="form-group col-md-12">
+                                                    <label for="scenario_0_catchEventDurationTimeUnit_{{ node_id }}">Time Unit:</label>
+                                                    <select class="form-control form-control-sm" 
+                                                            name="scenario_0_catchEventDurationTimeUnit_{{ node_id }}"
+                                                            id="scenario_0_catchEventDurationTimeUnit_{{ node_id }}">
+                                                        <option value="seconds">Seconds</option>
+                                                        <option value="minutes">Minutes</option>
+                                                        <option value="hours">Hours</option>
+                                                        <option value="days">Days</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>  
+                </div>
+            </div>
+            <!-- Global Settings (Shared across all scenarios) -->
+            <div class="box mt-4">
+                <h5 class="mb-3">Global Settings</h5>
+                <p class="text-muted small">These settings apply to all scenarios</p>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="logging_opt" name="logging_opt" value="1">
+                    <label class="form-check-label" for="logging_opt">
+                        Enable detailed logging (start, resource_assigned for each element) <br>
+                        in order to conduct a more <b>detailed analysis</b>.
+                    </label>
+                </div>
+            </div>
+
+            <div class="text-center mt-4 mb-5">
+                <button type="submit" class="btn btn-primary btn-lg px-5">
+                    Save Parameters and Run Simulation
+                </button>
+            </div>
+        </form>
+    </div>
+    <script src="{{ url_for('static', filename='js/jquery-3.5.1.slim.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script>
+        window.bpmn_dict = {{ bpmn_dict | tojson | safe }};
+    </script>
+    <script src="{{ url_for('static', filename='parameters/scenario-management.js') }}"></script>
+    <script src="{{ url_for('static', filename='parameters/instance-elements.js') }}"></script>
+    <script src="{{ url_for('static', filename='parameters/timetable-elements.js') }}"></script>
+    <script src="{{ url_for('static', filename='parameters/resource-elements.js') }}"></script>
+    <script src="{{ url_for('static', filename='parameters/bpmn-elements.js') }}"></script>
+    <script src="{{ url_for('static', filename='parameters/dynamic-elements.js') }}"></script>
+    <script>
+        const extraData = {% if flag_extra == 1 %}{{ extra | tojson | safe }}{% else %}null{% endif %};
+    </script>
+    <!-- Auto-load script (deve venire DOPO la definizione di extraData) -->
+    <script src="{{ url_for('static', filename='parameters/auto-load-parameters.js') }}"></script>
+
+    <script>
+    (function() {
+        // Live sum feedback per gateway group
+        function updateGroupSum(gatewayBox) {
+            const inputs = gatewayBox.querySelectorAll('input[name*="_executionProbability_"]');
+            let sum = 0;
+            inputs.forEach(inp => { sum += parseFloat(inp.value) || 0; });
+            const rounded = Math.round(sum * 1000) / 1000;
+
+            let badge = gatewayBox.querySelector('.prob-sum-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'prob-sum-badge ms-2 badge';
+                gatewayBox.querySelector('h6').appendChild(badge);
+            }
+            const ok = Math.abs(rounded - 1) < 0.001;
+            badge.textContent = 'Sum = ' + rounded;
+            badge.className = 'prob-sum-badge ms-2 badge ' + (ok ? 'bg-success' : 'bg-danger');
+        }
+
+        // Attach listeners to a single gateway box
+        function initBox(box) {
+            box.querySelectorAll('input[name*="_executionProbability_"]').forEach(inp => {
+                inp.addEventListener('input', () => updateGroupSum(box));
+            });
+        }
+
+        // Exposed globally so auto-load and duplicateScenario can call it after values are set
+        window.updateAllGatewaySums = function() {
+            document.querySelectorAll('.gateway-group').forEach(box => {
+                initBox(box);
+                updateGroupSum(box);
+            });
+        };
+
+        // Block submit if any group doesn't sum to 1
+        document.getElementById('main_form').addEventListener('submit', function(e) {
+            let errors = [];
+            document.querySelectorAll('.gateway-group').forEach(box => {
+                const inputs = box.querySelectorAll('input[name*="_executionProbability_"]');
+                let sum = 0;
+                inputs.forEach(inp => { sum += parseFloat(inp.value) || 0; });
+                if (inputs.length > 0 && Math.abs(sum - 1) > 0.001) {
+                    const name = box.querySelector('h6 strong');
+                    errors.push(name ? name.textContent : box.dataset.flowId);
+                }
+            });
+            if (errors.length > 0) {
+                e.preventDefault();
+                alert('Le probabilità dei seguenti gateway non sommano a 1:\n' + errors.join('\n'));
+            }
+        });
+
+        // Initial run: if no extra data, badges show 0 correctly; otherwise auto-load will call it again
+        window.updateAllGatewaySums();
+    })();
+    </script>
+
+</body>
+</html>
+            

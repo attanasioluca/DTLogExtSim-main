@@ -1,0 +1,2 @@
+[tool.pyrefly]
+ignore-missing-imports = ["*"]
