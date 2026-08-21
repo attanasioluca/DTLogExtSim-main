@@ -1,0 +1,120 @@
+{
+    "settings": {
+        "max_param_change_pct": 50.0,
+        "weight_cost": 33.0,
+        "weight_cycle": 33.0,
+        "weight_waiting": 34.0
+    },
+    "target_goal": {
+        "cost": 28880.88190998391,
+        "cycle_time": 21504.25882330573,
+        "waiting_time": 20009.690768173896
+    },
+    "baseline": {
+        "cost": 32089.86878887101,
+        "cycle_time": 23893.620914784144,
+        "waiting_time": 22232.98974241544
+    },
+    "nn_predicted": {
+        "cost": 28919.662109375,
+        "cycle_time": 21405.580078125,
+        "waiting_time": 20050.634765625
+    },
+    "optimized": {
+        "cost": 25673.742873508178,
+        "cycle_time": 21707.719067844893,
+        "waiting_time": 20328.254368624406
+    },
+    "deltas": {
+        "end_cost": -6416.125915362831,
+        "end_cycle": -2185.9018469392504,
+        "end_wait": -1904.7353737910344
+    },
+    "recommendations": [
+        {
+            "parameter": "arrival_rate_mean",
+            "baseline": 14408.88,
+            "optimized": 10223.87
+        },
+        {
+            "parameter": "res_Pharmacist_cost",
+            "baseline": 21.87,
+            "optimized": 101.65
+        },
+        {
+            "parameter": "res_Technician_cost",
+            "baseline": 13.04,
+            "optimized": 21.93
+        },
+        {
+            "parameter": "res_Pharmacy_Information_System_cost",
+            "baseline": 23.17,
+            "optimized": 10.0
+        },
+        {
+            "parameter": "el_sid-532DCBA6-2EA6-435D-AA1E-8B5115299C25_duration",
+            "baseline": 100.44,
+            "optimized": 125.68
+        },
+        {
+            "parameter": "el_sid-582150C6-EBEA-4A55-8E1D-7F0CA0B8CA54_duration",
+            "baseline": 23.12,
+            "optimized": 10.76
+        },
+        {
+            "parameter": "el_sid-2A37B8CB-663C-4265-839A-282F772E84CD_duration",
+            "baseline": 23.64,
+            "optimized": 4.75
+        },
+        {
+            "parameter": "el_sid-E0879ACC-9536-498C-BA79-DA8902BE9B34_duration",
+            "baseline": 48.69,
+            "optimized": 85.02
+        },
+        {
+            "parameter": "el_sid-4AE2ED27-9C67-481A-9168-772F2443AC40_duration",
+            "baseline": 660.16,
+            "optimized": 163.07
+        },
+        {
+            "parameter": "el_sid-C12EBC64-C7FC-447C-B752-63144C613AE3_duration",
+            "baseline": 463.75,
+            "optimized": 561.64
+        },
+        {
+            "parameter": "el_sid-5C5825C2-B65C-45BE-A3ED-994F57BB36F6_duration",
+            "baseline": 663.8,
+            "optimized": 712.74
+        },
+        {
+            "parameter": "el_sid-6476CFCF-4619-47E1-AAB6-E759EBBCFA19_duration",
+            "baseline": 46.11,
+            "optimized": 69.61
+        },
+        {
+            "parameter": "el_sid-4C7E683B-8A7A-4FC5-9BFE-7E06CB00DD9A_duration",
+            "baseline": 38.63,
+            "optimized": 71.91
+        },
+        {
+            "parameter": "el_sid-B3B7EE72-DC71-4E7F-8294-7D1D0931D128_duration",
+            "baseline": 6.61,
+            "optimized": 20.81
+        },
+        {
+            "parameter": "el_sid-A8BB4918-B634-4771-B746-709A2319BB3A_duration",
+            "baseline": 105.55,
+            "optimized": 108.84
+        },
+        {
+            "parameter": "el_sid-8B110648-DDB2-4073-B0E5-58F8A11C3BC1_duration",
+            "baseline": 4340.6,
+            "optimized": 2160.99
+        },
+        {
+            "parameter": "el_sid-780ADF48-2A4E-474C-949B-400E8E093FAB_duration",
+            "baseline": 147.59,
+            "optimized": 125.62
+        }
+    ]
+}

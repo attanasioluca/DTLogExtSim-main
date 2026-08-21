@@ -11,8 +11,8 @@ from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
 from scipy.stats import t as t_dist
 import time
 
-# Go up two levels to reach the root directory so 'helpers' resolves correctly
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+# Go up one level to reach the root directory so 'helpers' resolves correctly
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
@@ -28,16 +28,27 @@ _ABS_TOL_WAIT = 120.0
 _ABS_TOL_DUR = 120.0
 _ABS_TOL_COST = 0.5
 _MAX_WAIT_THRESHOLD = 86400 * 7  # Fallback: 7 days
+_MIN_REPS = 5
+_MAX_REPS = 75
+_TARGET_REL_ERROR = 0.02
+_SIMULATION_TIME = 86400 * 90
+_MAX_INSTANCES = None
 
-def init_worker(base_file, model_file, tol_wait, tol_dur, tol_cost, max_wait):
+def init_worker(base_file, model_file, tol_wait, tol_dur, tol_cost, max_wait, min_reps=5, max_reps=75, target_rel_error=0.02, simulation_time=86400 * 90, max_instances=None):
     """Runs ONCE per CPU core when the pool starts."""
     global _BASE_JSON, _FULL_MODEL, _PROCESS_DETAILS
     global _ABS_TOL_WAIT, _ABS_TOL_DUR, _ABS_TOL_COST, _MAX_WAIT_THRESHOLD
+    global _MIN_REPS, _MAX_REPS, _TARGET_REL_ERROR, _SIMULATION_TIME, _MAX_INSTANCES
 
     _ABS_TOL_WAIT = tol_wait
     _ABS_TOL_DUR = tol_dur
     _ABS_TOL_COST = tol_cost
     _MAX_WAIT_THRESHOLD = max_wait
+    _MIN_REPS = min_reps
+    _MAX_REPS = max_reps
+    _TARGET_REL_ERROR = target_rel_error
+    _SIMULATION_TIME = simulation_time
+    _MAX_INSTANCES = max_instances
 
     with open(base_file, 'r') as f:
         _BASE_JSON = json.load(f)
@@ -99,12 +110,6 @@ def precision_reached(values, rel_target, abs_tol):
 # 3. SIMULATION LOGIC (WORKER NODE)
 # ==========================================
 
-MIN_REPS = 5
-MAX_REPS = 75
-TARGET_REL_ERROR = 0.02
-SIMULATION_TIME = 86400 * 90
-MAX_INSTANCES = None
-
 def worker_task(scenario_id):
     try:
         rng = np.random.default_rng(seed=scenario_id)
@@ -149,15 +154,15 @@ def worker_task(scenario_id):
             _PROCESS_DETAILS,
             seed=scenario_id,
         )
-        rep_seeds = np.random.SeedSequence(scenario_id).spawn(MAX_REPS)
+        rep_seeds = np.random.SeedSequence(scenario_id).spawn(_MAX_REPS)
 
         results = []
         converged = False
         converged_wait = converged_cost = converged_duration = False
 
-        for rep in range(MAX_REPS):
+        for rep in range(_MAX_REPS):
             simulator.seed = rep_seeds[rep]
-            rep_result = simulator.run_replication(until=SIMULATION_TIME, max_instances=MAX_INSTANCES)
+            rep_result = simulator.run_replication(until=_SIMULATION_TIME, max_instances=_MAX_INSTANCES)
             
             # EARLY DROPPING: If the queue immediately explodes past our dynamic threshold, 
             # drop the simulation entirely to save time. It would be dropped by the model anyway.
@@ -167,14 +172,14 @@ def worker_task(scenario_id):
                 
             results.append(rep_result)
 
-            if len(results) >= MIN_REPS:
+            if len(results) >= _MIN_REPS:
                 wait_times = [r["wait_time"] for r in results]
                 costs = [r["total_cost"] for r in results]
                 durations = [r["duration"] for r in results]
                 
-                converged_wait, _ = precision_reached(wait_times, TARGET_REL_ERROR, _ABS_TOL_WAIT)
-                converged_cost, _ = precision_reached(costs, TARGET_REL_ERROR, _ABS_TOL_COST)
-                converged_duration, _ = precision_reached(durations, TARGET_REL_ERROR, _ABS_TOL_DUR)
+                converged_wait, _ = precision_reached(wait_times, _TARGET_REL_ERROR, _ABS_TOL_WAIT)
+                converged_cost, _ = precision_reached(costs, _TARGET_REL_ERROR, _ABS_TOL_COST)
+                converged_duration, _ = precision_reached(durations, _TARGET_REL_ERROR, _ABS_TOL_DUR)
 
                 if converged_wait and converged_cost and converged_duration:
                     converged = True
@@ -205,7 +210,17 @@ def worker_task(scenario_id):
 # 4. PARALLEL PIPELINE & BATCH WRITING
 # ==========================================
 
-def main(SOURCE="synthetic", START_ID=0, NUM_SCENARIOS=10_000, WORKERS_NUM=22):
+def main(
+    SOURCE="synthetic",
+    START_ID=0,
+    NUM_SCENARIOS=10_000,
+    WORKERS_NUM=22,
+    MIN_REPS=5,
+    MAX_REPS=75,
+    TARGET_REL_ERROR=0.02,
+    SIMULATION_TIME=86400 * 90,
+    MAX_INSTANCES=None,
+):
     BATCH_SIZE = 100
     BASE_FILE = f"data/{SOURCE}/model/scenario.json"
     MODEL_FILE = f"data/{SOURCE}/model/model.json"
@@ -244,22 +259,38 @@ def main(SOURCE="synthetic", START_ID=0, NUM_SCENARIOS=10_000, WORKERS_NUM=22):
                 os.remove(OUTPUT_FILE)
 
     print(f"--- DYNAMIC BOUNDS CALCULATION ---")
-    print(f"Cost ABS_TOL:   ${tol_cost:.2f}")
-    print(f"Dur ABS_TOL:    {tol_dur:.2f}s")
-    print(f"Wait ABS_TOL:   {tol_wait:.2f}s")
+    print(f"MIN_REPS:         {MIN_REPS}")
+    print(f"MAX_REPS:         {MAX_REPS}")
+    print(f"TARGET_REL_ERROR: {TARGET_REL_ERROR}")
+    print(f"SIMULATION_TIME:  {SIMULATION_TIME}s")
+    print(f"MAX_INSTANCES:    {MAX_INSTANCES}")
+    print(f"Cost ABS_TOL:     ${tol_cost:.2f}")
+    print(f"Dur ABS_TOL:      {tol_dur:.2f}s")
+    print(f"Wait ABS_TOL:     {tol_wait:.2f}s")
     print(f"Abort if wait exceeds: {max_wait_abort:.2f}s\n")
 
     if NUM_SCENARIOS <= 0:
         print("NUM_SCENARIOS is 0 or less. Nothing to do.", flush=True)
         return
-
     start_time = time.time()
     results_batch = []
     
     successful_new = 0
     current_id = START_ID
     
-    init_args = (BASE_FILE, MODEL_FILE, tol_wait, tol_dur, tol_cost, max_wait_abort)
+    init_args = (
+        BASE_FILE,
+        MODEL_FILE,
+        tol_wait,
+        tol_dur,
+        tol_cost,
+        max_wait_abort,
+        MIN_REPS,
+        MAX_REPS,
+        TARGET_REL_ERROR,
+        SIMULATION_TIME,
+        MAX_INSTANCES,
+    )
 
     with ProcessPoolExecutor(max_workers=WORKERS_NUM, initializer=init_worker, initargs=init_args) as executor:
         active_futures = set()
@@ -319,14 +350,34 @@ def main(SOURCE="synthetic", START_ID=0, NUM_SCENARIOS=10_000, WORKERS_NUM=22):
         df.to_csv(OUTPUT_FILE, mode='a', index=False, header=not header_written)
 
     total_time = time.time() - start_time
-    print(f"Pipeline complete! {successful_new:,} new scenarios successfully generated in {total_time:.2f} seconds.", flush=True)
+    print(f"Pipeline complete. {successful_new:,} new scenarios successfully generated in {total_time:.2f} seconds.", flush=True)
+
+def parse_int_or_none(val):
+    if val is None or str(val).strip().lower() in ("none", "null", ""):
+        return None
+    return int(val)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", default="synthetic", help="Dataset source directory name")
     parser.add_argument("--start_id", type=int, default=0, help="Starting scenario ID")
-    parser.add_argument("--num_scenarios", type=int, default=10000, help="Total number of scenarios to target")
-    parser.add_argument("--workers", type=int, default=22, help="Number of CPU cores to allocate")
+    parser.add_argument("--num_scenarios", type=int, default=10_000, help="Total number of scenarios to target")
+    parser.add_argument("--workers", type=int, default=24, help="Number of CPU cores to allocate")
+    parser.add_argument("--min_reps", type=int, default=5, help="Minimum replications per scenario")
+    parser.add_argument("--max_reps", type=int, default=50, help="Maximum replications per scenario")
+    parser.add_argument("--target_rel_error", type=float, default=0.02, help="Target relative error for precision stopping rule")
+    parser.add_argument("--simulation_time", type=int, default=86400 * 90, help="Simulation duration in seconds")
+    parser.add_argument("--max_instances", type=parse_int_or_none, default=None, help="Max instances per simulation replication")
     
     args = parser.parse_args()
-    main(args.source, args.start_id, args.num_scenarios, args.workers)
+    main(
+        SOURCE=args.source,
+        START_ID=args.start_id,
+        NUM_SCENARIOS=args.num_scenarios,
+        WORKERS_NUM=args.workers,
+        MIN_REPS=args.min_reps,
+        MAX_REPS=args.max_reps,
+        TARGET_REL_ERROR=args.target_rel_error,
+        SIMULATION_TIME=args.simulation_time,
+        MAX_INSTANCES=args.max_instances,
+    )

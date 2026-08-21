@@ -12,6 +12,8 @@ import joblib
 import time
 import json
 
+import os
+
 # ==========================================
 # CONFIGURATION & CONSTANTS
 # ==========================================
@@ -28,10 +30,67 @@ NON_FEATURE_COLS = [
 ]
 CONVERGENCE_FLAGS = ["converged", "converged_wait", "converged_cost", "converged_duration"]
 
-BATCH_SIZE = 128
-LEARNING_RATE = 0.003762055405219111
-WEIGHT_DECAY = 3.4659127733948095e-05
-DROPOUT_RATE = 0.3873774479725938
+def load_hyperparameters(source=None, base_dir=None):
+    """
+    Loads hyperparameter settings using precedence:
+    1. Environment variables (BATCH_SIZE, LEARNING_RATE/LR, WEIGHT_DECAY, DROPOUT_RATE)
+    2. Source-specific JSON config (output/{source}/best_params.json)
+    3. Global model JSON config (best_params.json)
+    4. Default fallbacks
+    """
+    if base_dir is None:
+        base_dir = Path(__file__).parent
+
+    defaults = {
+        "batch_size": 128,
+        "learning_rate": 0.003762055405219111,
+        "weight_decay": 3.4659127733948095e-05,
+        "dropout_rate": 0.3873774479725938
+    }
+    params = defaults.copy()
+
+    # 1. Source-specific JSON file
+    if source:
+        source_json = base_dir / f"output/{source}/best_params.json"
+        if source_json.exists():
+            try:
+                with open(source_json, "r") as f:
+                    params.update(json.load(f))
+            except Exception:
+                pass
+
+    # 2. Global model JSON file (if source JSON did not exist)
+    generic_json = base_dir / "best_params.json"
+    if generic_json.exists():
+        try:
+            with open(generic_json, "r") as f:
+                loaded = json.load(f)
+                for k, v in loaded.items():
+                    if source and (base_dir / f"output/{source}/best_params.json").exists():
+                        continue
+                    params[k] = v
+        except Exception:
+            pass
+
+    # 3. Environment Variables Override
+    if os.environ.get("BATCH_SIZE"):
+        params["batch_size"] = int(os.environ["BATCH_SIZE"])
+    if os.environ.get("LEARNING_RATE"):
+        params["learning_rate"] = float(os.environ["LEARNING_RATE"])
+    elif os.environ.get("LR"):
+        params["learning_rate"] = float(os.environ["LR"])
+    if os.environ.get("WEIGHT_DECAY"):
+        params["weight_decay"] = float(os.environ["WEIGHT_DECAY"])
+    if os.environ.get("DROPOUT_RATE"):
+        params["dropout_rate"] = float(os.environ["DROPOUT_RATE"])
+
+    return params
+
+DEFAULT_PARAMS = load_hyperparameters()
+BATCH_SIZE = int(DEFAULT_PARAMS["batch_size"])
+LEARNING_RATE = float(DEFAULT_PARAMS.get("learning_rate", DEFAULT_PARAMS.get("lr", 0.00376)))
+WEIGHT_DECAY = float(DEFAULT_PARAMS["weight_decay"])
+DROPOUT_RATE = float(DEFAULT_PARAMS["dropout_rate"])
 
 def inverse_transform_targets(y_scaled, y_scaler):
     y_unscaled = y_scaler.inverse_transform(y_scaled)
@@ -55,14 +114,14 @@ class SimulationDataset(Dataset):
         self.X = torch.tensor(X, dtype=torch.float32)
         self.y = torch.tensor(y, dtype=torch.float32)
     def __len__(self): return len(self.X)
-    def __getitem__(self, index): return self.X[index], self.y[index]
+    def __getitem__(self, idx): return self.X[idx], self.y[idx]
 
 # ==========================================
 # 2. NEURAL NETWORK ARCHITECTURE
 # ==========================================
-class PharmacySurrogate(nn.Module):
+class SurrogateModel(nn.Module):
     def __init__(self, input_size, DROPOUT_RATE):
-        super(PharmacySurrogate, self).__init__()
+        super(SurrogateModel, self).__init__()
         self.shared_entry = nn.Sequential(nn.Linear(input_size, 256), nn.BatchNorm1d(256), nn.Mish(), nn.Dropout(DROPOUT_RATE))
         self.shared_h1 = nn.Linear(256, 128)
         self.bn1 = nn.BatchNorm1d(128)
@@ -95,10 +154,18 @@ class PharmacySurrogate(nn.Module):
 # ==========================================
 def main(SOURCE="BIMP", train_num=10000):
     DATA_FILE = f"data/{SOURCE}/sim_data_waiting_times.csv" 
-    EPOCHS = 10000
+    EPOCHS = int(os.environ.get("EPOCHS", 2500))
+    PATIENCE = int(os.environ.get("PATIENCE", 200))
+    TEST_SIZE = float(os.environ.get("TEST_SIZE", 0.20))
 
+    params = load_hyperparameters(source=SOURCE)
+    batch_size = int(params["batch_size"])
+    learning_rate = float(params.get("learning_rate", params.get("lr")))
+    weight_decay = float(params["weight_decay"])
+    dropout_rate = float(params["dropout_rate"])
 
-    
+    print(f"Hyperparameters loaded for source '{SOURCE}': BATCH_SIZE={batch_size}, LEARNING_RATE={learning_rate}, WEIGHT_DECAY={weight_decay}, DROPOUT_RATE={dropout_rate}")
+
     device = torch.device("mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
     print("Loading dataset from source:", SOURCE)
     df = pd.read_csv(DATA_FILE)
@@ -119,7 +186,7 @@ def main(SOURCE="BIMP", train_num=10000):
     y_log[:, LOG_COL_IDX] = np.log1p(y_log[:, LOG_COL_IDX])
     
     X_train_full, X_test, y_train_full, y_test, _, y_test_raw = train_test_split(
-        X_df.values, y_log, y_raw, test_size=0.20, random_state=42
+        X_df.values, y_log, y_raw, test_size=TEST_SIZE, random_state=42
     )
     
     X_train = X_train_full[:train_num]
@@ -145,16 +212,16 @@ def main(SOURCE="BIMP", train_num=10000):
     train_dataset = SimulationDataset(X_train_scaled, y_train_scaled)
     test_dataset = SimulationDataset(X_test_scaled, y_test_scaled)
     
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-    model = PharmacySurrogate(input_size, DROPOUT_RATE=DROPOUT_RATE).to(device)
+    model = SurrogateModel(input_size, DROPOUT_RATE=dropout_rate).to(device)
     criterion = nn.MSELoss() 
-    optimizer = optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+    optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS, eta_min=1e-5)
     
     best_test_loss = float('inf')
-    patience = 200
+    patience = PATIENCE
     patience_counter = 0
     start_time = time.time()
     
@@ -237,6 +304,7 @@ def main(SOURCE="BIMP", train_num=10000):
     metrics = {
         "Data Source": SOURCE,
         "Model Name": "Complex NN - Hypertuned",
+        "Train Samples": len(X_train),
         "Best Test Loss": float(best_test_loss),
         "MedAE": {
             "cost": float(medae_kpi[0]), 
@@ -259,12 +327,21 @@ def main(SOURCE="BIMP", train_num=10000):
     metrics_file.parent.mkdir(parents=True, exist_ok=True)
     
     if metrics_file.exists():
-        with open(metrics_file, "r") as f: all_metrics = json.load(f)
-    else: all_metrics = []
+        with open(metrics_file, "r") as f:
+            all_metrics = json.load(f)
+    else:
+        all_metrics = []
 
-    all_metrics = [m for m in all_metrics if not (m["Data Source"] == SOURCE and m["Model Name"] == metrics["Model Name"])]
+    all_metrics = [
+        m for m in all_metrics
+        if not (
+            m.get("Data Source") == SOURCE
+            and m.get("Model Name") == metrics["Model Name"]
+            and m.get("Train Samples") == metrics["Train Samples"]
+        )
+    ]
     all_metrics.append(metrics)
-    all_metrics.sort(key=lambda x: x["Data Source"])
+    all_metrics.sort(key=lambda x: (x.get("Data Source", ""), x.get("Model Name", ""), x.get("Train Samples", 0)))
 
     with open(metrics_file, "w") as f:
         json.dump(all_metrics, f, indent=4)
@@ -273,6 +350,6 @@ def main(SOURCE="BIMP", train_num=10000):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("source", nargs="?", default="synthetic", help="Dataset source (default: synthetic)")
-    parser.add_argument("--train_num", type=int, default=40000, help="Number of training samples")
+    parser.add_argument("--train_num", type=int, default=100000, help="Number of training samples")
     args = parser.parse_args()
     main(args.source, train_num=args.train_num)

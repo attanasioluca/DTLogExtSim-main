@@ -1,3 +1,4 @@
+import json
 import argparse
 from pathlib import Path
 import pandas as pd
@@ -31,11 +32,11 @@ class SimulationDataset(Dataset):
         self.X = torch.tensor(X, dtype=torch.float32)
         self.y = torch.tensor(y, dtype=torch.float32)
     def __len__(self): return len(self.X)
-    def __getitem__(self, index): return self.X[index], self.y[index]
+    def __getitem__(self, idx): return self.X[idx], self.y[idx]
 
-class PharmacySurrogate(nn.Module):
+class SurrogateModel(nn.Module):
     def __init__(self, input_size, dropout_rate=0.1):
-        super(PharmacySurrogate, self).__init__()
+        super(SurrogateModel, self).__init__()
         self.shared_entry = nn.Sequential(nn.Linear(input_size, 256), nn.BatchNorm1d(256), nn.Mish(), nn.Dropout(dropout_rate))
         self.shared_h1 = nn.Linear(256, 128)
         self.bn1 = nn.BatchNorm1d(128)
@@ -99,7 +100,7 @@ def main(SOURCE="BIMP", train_num=40000):
         train_loader = DataLoader(SimulationDataset(X_train_scaled, y_train_scaled), batch_size=batch_size, shuffle=True)
         test_loader = DataLoader(SimulationDataset(X_test_scaled, y_test_scaled), batch_size=batch_size, shuffle=False)
 
-        model = PharmacySurrogate(input_size, dropout_rate=dropout_rate).to(device)
+        model = SurrogateModel(input_size, dropout_rate=dropout_rate).to(device)
         optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
         criterion = nn.MSELoss() 
         
@@ -121,7 +122,7 @@ def main(SOURCE="BIMP", train_num=40000):
                     batch_X, batch_y = batch_X.to(device), batch_y.to(device)
                     val_kpi_loss += criterion(model(batch_X), batch_y).item() * batch_X.size(0)
                     
-            val_kpi_loss /= len(X_test)
+            val_kpi_loss /= len(test_loader.dataset)
             trial.report(val_kpi_loss, epoch)
             if trial.should_prune(): raise optuna.exceptions.TrialPruned()
 
@@ -137,18 +138,40 @@ def main(SOURCE="BIMP", train_num=40000):
     print(f"\nBest Trial Validation MSE: {study.best_trial.value:.5f}")
 
     best_params = study.best_trial.params
-    print("\n" + "="*50)
-    print("🚀 COPY & PASTE INTO hypertuned_model.py")
-    print("="*50)
-    print(f"BATCH_SIZE = {best_params['batch_size']}")
-    print(f"LEARNING_RATE = {best_params['lr']}")
-    print(f"WEIGHT_DECAY = {best_params['weight_decay']}")
-    print(f"DROPOUT_RATE = {best_params['dropout_rate']}")
+    hyperparams = {
+        "batch_size": int(best_params["batch_size"]),
+        "learning_rate": float(best_params["lr"]),
+        "weight_decay": float(best_params["weight_decay"]),
+        "dropout_rate": float(best_params["dropout_rate"])
+    }
+
+    base_dir = Path(__file__).parent
+    source_out_dir = base_dir / f"output/{SOURCE}"
+    source_out_dir.mkdir(parents=True, exist_ok=True)
+    
+    source_json = source_out_dir / "best_params.json"
+    generic_json = base_dir / "best_params.json"
+    
+    with open(source_json, "w") as f:
+        json.dump(hyperparams, f, indent=4)
+    with open(generic_json, "w") as f:
+        json.dump(hyperparams, f, indent=4)
+
+    print(f"BATCH_SIZE = {hyperparams['batch_size']}")
+    print(f"LEARNING_RATE = {hyperparams['learning_rate']}")
+    print(f"WEIGHT_DECAY = {hyperparams['weight_decay']}")
+    print(f"DROPOUT_RATE = {hyperparams['dropout_rate']}")
+    print("-" * 50)
+    print(f"Saved config automatically to:")
+    print(f"  - {source_json}")
+    print(f"  - {generic_json}")
+    print("\nOr run with environment variables:")
+    print(f"export BATCH_SIZE={hyperparams['batch_size']} LEARNING_RATE={hyperparams['learning_rate']} WEIGHT_DECAY={hyperparams['weight_decay']} DROPOUT_RATE={hyperparams['dropout_rate']}")
     print("="*50 + "\n")
 
 if __name__ == "__main__": 
     parser = argparse.ArgumentParser()
     parser.add_argument("source", nargs="?", default="synthetic", help="Dataset source (default: synthetic)")
-    parser.add_argument("--train_num", type=int, default=40000, help="Number of training samples")
+    parser.add_argument("--train_num", type=int, default=100000, help="Number of training samples")
     args = parser.parse_args()
     main(args.source, train_num=args.train_num)

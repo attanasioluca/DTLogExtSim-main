@@ -29,6 +29,7 @@ services:
     build:
       context: ./Interface
     volumes:
+      - ./Interface/Content:/app
       - uploads:/app/uploads
       - download:/app/download
       - extractor:/app/extractor

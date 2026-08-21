@@ -36,7 +36,10 @@ def inverse_transform_targets(y_scaled, y_scaler):
 # LINEAR REGRESSION BASELINE
 # ==========================================
 def main(SOURCE="synthetic", train_num=40000):
+    import os
     DATA_FILE = f"data/{SOURCE}/sim_data_waiting_times.csv"
+    TEST_SIZE = float(os.environ.get("TEST_SIZE", 0.20))
+    FIT_INTERCEPT = os.environ.get("FIT_INTERCEPT", "1") in ("1", "true", "True")
     
     print("Loading dataset from source:", SOURCE)
     df = pd.read_csv(DATA_FILE) 
@@ -60,7 +63,7 @@ def main(SOURCE="synthetic", train_num=40000):
 
     # 2. Split the FULL dataset once to create a universal, locked test set
     X_train_full, X_test, y_train_full, y_test, _, y_test_raw = train_test_split(
-        X_df.values, y_log, y_raw, test_size=0.2, random_state=42
+        X_df.values, y_log, y_raw, test_size=TEST_SIZE, random_state=42
     )
 
     TRAIN_SAMPLES = train_num
@@ -95,7 +98,7 @@ def main(SOURCE="synthetic", train_num=40000):
     start_time = time.time()
     
     # Scikit-learn's LinearRegression handles multiple outputs natively
-    model = LinearRegression()
+    model = LinearRegression(fit_intercept=FIT_INTERCEPT)
     model.fit(X_train_scaled, y_train_scaled)
     
     # Save the model
@@ -146,6 +149,7 @@ def main(SOURCE="synthetic", train_num=40000):
     metrics = {
         "Data Source": SOURCE,
         "Model Name": "Linear Regression Baseline",
+        "Train Samples": len(X_train),
         "Best Test Loss": float(test_mse_scaled),
         "MedAE": {
             "cost": float(medae_raw[0]), 
@@ -174,18 +178,19 @@ def main(SOURCE="synthetic", train_num=40000):
     else:
         all_metrics = []
 
-    # Remove any previous entry for this source + model
+    # Remove any previous entry for this source + model + train_samples
     all_metrics = [
         m for m in all_metrics
         if not (
-            m["Data Source"] == SOURCE
-            and m["Model Name"] == metrics["Model Name"]
+            m.get("Data Source") == SOURCE
+            and m.get("Model Name") == metrics["Model Name"]
+            and m.get("Train Samples") == metrics["Train Samples"]
         )
     ]
 
     # Add the updated metrics
     all_metrics.append(metrics)
-    all_metrics.sort(key=lambda x: x["Data Source"])
+    all_metrics.sort(key=lambda x: (x.get("Data Source", ""), x.get("Model Name", ""), x.get("Train Samples", 0)))
 
     with open(metrics_file, "w") as f:
         json.dump(all_metrics, f, indent=4)
@@ -202,7 +207,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_num",
         type=int,
-        default=40000,
+        default=100000,
         help="Number of training samples to use (default: 40000)"
     )
 

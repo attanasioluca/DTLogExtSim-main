@@ -1,0 +1,359 @@
+[
+    {
+        "Data Source": "BIMP",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 1000,
+        "Best Test Loss": 0.11262787789853199,
+        "MedAE": {
+            "cost": 1614.0989156573705,
+            "cycle_time": 268.24040794386383,
+            "waiting_time": 413.8653665977399
+        },
+        "MAE": {
+            "cost": 2572.77442179227,
+            "cycle_time": 924.8631917916458,
+            "waiting_time": 1221.7145457488357
+        },
+        "MedAE_Percentage": {
+            "cost": 4.887118896272993,
+            "cycle_time": 1.5014450097618088,
+            "waiting_time": 1.201514614361931
+        }
+    },
+    {
+        "Data Source": "BIMP",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 5000,
+        "Best Test Loss": 0.01986444300638641,
+        "MedAE": {
+            "cost": 895.5217395294312,
+            "cycle_time": 144.35601861534087,
+            "waiting_time": 251.50643577334995
+        },
+        "MAE": {
+            "cost": 1359.788708286266,
+            "cycle_time": 375.4406066048721,
+            "waiting_time": 538.8106774552974
+        },
+        "MedAE_Percentage": {
+            "cost": 2.71143309299302,
+            "cycle_time": 0.8080163068662096,
+            "waiting_time": 0.7301617448011185
+        }
+    },
+    {
+        "Data Source": "BIMP",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 10000,
+        "Best Test Loss": 0.011707450280211378,
+        "MedAE": {
+            "cost": 719.6356032705553,
+            "cycle_time": 128.82783246734834,
+            "waiting_time": 227.9715517065124
+        },
+        "MAE": {
+            "cost": 1089.3543292719253,
+            "cycle_time": 295.46475171723876,
+            "waiting_time": 428.01732077937936
+        },
+        "MedAE_Percentage": {
+            "cost": 2.1788904763262336,
+            "cycle_time": 0.7210990605748342,
+            "waiting_time": 0.6618363679132678
+        }
+    },
+    {
+        "Data Source": "BIMP",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 25000,
+        "Best Test Loss": 0.007523904944476594,
+        "MedAE": {
+            "cost": 638.891961221063,
+            "cycle_time": 121.00453420772101,
+            "waiting_time": 212.40759693086875
+        },
+        "MAE": {
+            "cost": 881.1311410927483,
+            "cycle_time": 246.18614461962576,
+            "waiting_time": 358.64456489869673
+        },
+        "MedAE_Percentage": {
+            "cost": 1.9344173681504147,
+            "cycle_time": 0.6773090431727807,
+            "waiting_time": 0.6166518208854902
+        }
+    },
+    {
+        "Data Source": "BIMP",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 40000,
+        "Best Test Loss": 0.00612970310993272,
+        "MedAE": {
+            "cost": 601.2356278492425,
+            "cycle_time": 115.55515116066454,
+            "waiting_time": 203.79535110526194
+        },
+        "MAE": {
+            "cost": 813.6704129298836,
+            "cycle_time": 223.03406074630158,
+            "waiting_time": 327.01266910905343
+        },
+        "MedAE_Percentage": {
+            "cost": 1.8204026837958136,
+            "cycle_time": 0.6468067447122303,
+            "waiting_time": 0.5916491507973654
+        }
+    },
+    {
+        "Data Source": "real",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 1000,
+        "Best Test Loss": 0.20669138372021087,
+        "MedAE": {
+            "cost": 4825.112332496108,
+            "cycle_time": 1314.6940955532264,
+            "waiting_time": 1244.9775159737437
+        },
+        "MAE": {
+            "cost": 7099.028567034186,
+            "cycle_time": 4222.425254416596,
+            "waiting_time": 4245.723042060389
+        },
+        "MedAE_Percentage": {
+            "cost": 6.641293804393474,
+            "cycle_time": 4.569033015974434,
+            "waiting_time": 5.293615507455046
+        }
+    },
+    {
+        "Data Source": "real",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 5000,
+        "Best Test Loss": 0.07657283328667913,
+        "MedAE": {
+            "cost": 2577.855424354544,
+            "cycle_time": 650.9918066887731,
+            "waiting_time": 653.7716493125627
+        },
+        "MAE": {
+            "cost": 3884.1378832089767,
+            "cycle_time": 2601.7536179081576,
+            "waiting_time": 2691.6315023497064
+        },
+        "MedAE_Percentage": {
+            "cost": 3.5481651158847405,
+            "cycle_time": 2.262429768225448,
+            "waiting_time": 2.7798218817057188
+        }
+    },
+    {
+        "Data Source": "real",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 10000,
+        "Best Test Loss": 0.05339306009818858,
+        "MedAE": {
+            "cost": 1972.8802822503785,
+            "cycle_time": 543.7109381227965,
+            "waiting_time": 574.8935372166452
+        },
+        "MAE": {
+            "cost": 3061.40993126575,
+            "cycle_time": 2270.147570790211,
+            "waiting_time": 2347.9138594628253
+        },
+        "MedAE_Percentage": {
+            "cost": 2.715476178052287,
+            "cycle_time": 1.8895903129344465,
+            "waiting_time": 2.4444339794887506
+        }
+    },
+    {
+        "Data Source": "real",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 25000,
+        "Best Test Loss": 0.026269724282282463,
+        "MedAE": {
+            "cost": 1535.4387554331915,
+            "cycle_time": 471.25593284739807,
+            "waiting_time": 500.3271554610037
+        },
+        "MAE": {
+            "cost": 2287.3263716127763,
+            "cycle_time": 1727.9288879425774,
+            "waiting_time": 1789.261110159951
+        },
+        "MedAE_Percentage": {
+            "cost": 2.113380827386635,
+            "cycle_time": 1.637783210129599,
+            "waiting_time": 2.1273794546222935
+        }
+    },
+    {
+        "Data Source": "real",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 39283,
+        "Best Test Loss": 0.01863675572890587,
+        "MedAE": {
+            "cost": 1383.6177529966808,
+            "cycle_time": 428.4217913531429,
+            "waiting_time": 471.6142869210162
+        },
+        "MAE": {
+            "cost": 2005.6481775457908,
+            "cycle_time": 1499.974080537216,
+            "waiting_time": 1572.2592798740043
+        },
+        "MedAE_Percentage": {
+            "cost": 1.9044141104735801,
+            "cycle_time": 1.4889192216473073,
+            "waiting_time": 2.0052930038899563
+        }
+    },
+    {
+        "Data Source": "synthetic",
+        "Model Name": "LightGBM",
+        "Train Samples": 25000,
+        "Best Test Loss": 0.010716655119170285,
+        "MedAE": {
+            "cost": 1761.2842607456078,
+            "cycle_time": 208.57763385572798,
+            "waiting_time": 194.1236749905911
+        },
+        "MAE": {
+            "cost": 2274.5314789046893,
+            "cycle_time": 1296.014551310079,
+            "waiting_time": 1330.0174676248048
+        },
+        "MedAE_Percentage": {
+            "cost": 3.9176768169744713,
+            "cycle_time": 0.9000170203876235,
+            "waiting_time": 1.0220848890628165
+        }
+    },
+    {
+        "Data Source": "synthetic",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 100,
+        "Best Test Loss": 0.5426735927763778,
+        "MedAE": {
+            "cost": 9947.044308366512,
+            "cycle_time": 4067.6201791710555,
+            "waiting_time": 3781.959475716805
+        },
+        "MAE": {
+            "cost": 12815.342427228941,
+            "cycle_time": 9679.331031700014,
+            "waiting_time": 9466.016736173382
+        },
+        "MedAE_Percentage": {
+            "cost": 22.125505662446788,
+            "cycle_time": 17.55186942171541,
+            "waiting_time": 19.912479152094317
+        }
+    },
+    {
+        "Data Source": "synthetic",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 1000,
+        "Best Test Loss": 0.16028494094598894,
+        "MedAE": {
+            "cost": 2626.182316835864,
+            "cycle_time": 558.4478467463396,
+            "waiting_time": 488.2350873906007
+        },
+        "MAE": {
+            "cost": 4054.4702529828464,
+            "cycle_time": 5026.022891927112,
+            "waiting_time": 4896.485373558205
+        },
+        "MedAE_Percentage": {
+            "cost": 5.841495214100594,
+            "cycle_time": 2.409714588181488,
+            "waiting_time": 2.570617443526058
+        }
+    },
+    {
+        "Data Source": "synthetic",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 5000,
+        "Best Test Loss": 0.056768547019357185,
+        "MedAE": {
+            "cost": 1959.8282040145023,
+            "cycle_time": 277.34989695425065,
+            "waiting_time": 245.09262247504194
+        },
+        "MAE": {
+            "cost": 2756.646048092687,
+            "cycle_time": 3137.0497477690774,
+            "waiting_time": 3263.3641294322824
+        },
+        "MedAE_Percentage": {
+            "cost": 4.359303998361967,
+            "cycle_time": 1.1967708293893087,
+            "waiting_time": 1.2904426307850376
+        }
+    },
+    {
+        "Data Source": "synthetic",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 10000,
+        "Best Test Loss": 0.025047405413732883,
+        "MedAE": {
+            "cost": 1842.3919687017042,
+            "cycle_time": 226.840240561658,
+            "waiting_time": 217.7194107924479
+        },
+        "MAE": {
+            "cost": 2443.76716284723,
+            "cycle_time": 2515.927214050855,
+            "waiting_time": 2345.3530123799355
+        },
+        "MedAE_Percentage": {
+            "cost": 4.098087097256553,
+            "cycle_time": 0.9788205649869994,
+            "waiting_time": 1.1463193236858227
+        }
+    },
+    {
+        "Data Source": "synthetic",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 25000,
+        "Best Test Loss": 0.010501506046631838,
+        "MedAE": {
+            "cost": 1747.0466484684584,
+            "cycle_time": 195.34636976063666,
+            "waiting_time": 176.51251862179925
+        },
+        "MAE": {
+            "cost": 2249.191940278211,
+            "cycle_time": 1225.1584482133758,
+            "waiting_time": 1217.4733933651298
+        },
+        "MedAE_Percentage": {
+            "cost": 3.886007673730299,
+            "cycle_time": 0.8429238284346321,
+            "waiting_time": 0.9293599970354169
+        }
+    },
+    {
+        "Data Source": "synthetic",
+        "Model Name": "LightGBM - Hypertuned",
+        "Train Samples": 38846,
+        "Best Test Loss": 0.009314838723671472,
+        "MedAE": {
+            "cost": 1696.4589266172516,
+            "cycle_time": 183.06240644299396,
+            "waiting_time": 172.6032551845492
+        },
+        "MAE": {
+            "cost": 2188.2091668638295,
+            "cycle_time": 1065.7678400472355,
+            "waiting_time": 1085.918748930281
+        },
+        "MedAE_Percentage": {
+            "cost": 3.7734839036966483,
+            "cycle_time": 0.789918259911677,
+            "waiting_time": 0.9087772469572892
+        }
+    }
+]

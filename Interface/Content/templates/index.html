@@ -34,7 +34,7 @@
                         <a class="nav-link" id="whatif-tab" data-bs-toggle="tab" href="#whatif">What-If</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="nnkpi-tab" data-bs-toggle="tab" href="#nnkpi">NN-KPI Predictor</a>
+                        <a class="nav-link" id="nnkpi-tab" data-bs-toggle="tab" href="#nnkpi">KPI Predictor</a>
                     </li>
                 </ul>
 
@@ -189,7 +189,7 @@
                     <!-- NN-KPI Predictor Form -->
                     <div class="tab-pane fade" id="nnkpi" style="padding-bottom: 80px;">
                         <div class="alert alert-primary mt-3">
-                            <strong>NN-KPI-Predictor Module</strong> — Upload process model & scenario definitions, generate simulated training datasets, and train Neural Network KPI surrogates.
+                            <strong>KPI Predictor Module</strong> — Upload process model & scenario definitions, generate simulated training datasets, and train Neural Network KPI surrogates.
                         </div>
 
                         <!-- Step 1: Upload Model and Scenario -->
@@ -227,14 +227,64 @@
                                 <form id="nnkpiSimForm">
                                     <div class="row">
                                         <div class="col-md-6 form-group my-2">
-                                            <label for="num_scenarios">Number of Mutated Scenarios:</label>
-                                            <input type="number" class="form-control" id="num_scenarios" name="num_scenarios" value="50" min="5" max="10000" />
+                                            <label for="num_scenarios">Number of alternative scenarios:</label>
+                                            <input type="number" class="form-control" id="num_scenarios" name="num_scenarios" value="50" min="5" max="50000" />
                                         </div>
                                         <div class="col-md-6 form-group my-2">
                                             <label for="workers_num">Parallel CPU Workers:</label>
-                                            <input type="number" class="form-control" id="workers_num" name="workers_num" value="2" min="1" max="16" />
+                                            <input type="number" class="form-control" id="workers_num" name="workers_num" value="8" min="1" max="32" />
                                         </div>
                                     </div>
+
+                                    <div class="accordion mt-2" id="advSimAccordion">
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingSimAdv">
+                                                <button class="accordion-button collapsed py-2 text-dark bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSimAdv">
+                                                    <small class="font-weight-bold">Advanced Simulation Parameters</small>
+                                                </button>
+                                            </h2>
+                                            <div id="collapseSimAdv" class="accordion-collapse collapse" data-bs-parent="#advSimAccordion">
+                                                <div class="accordion-body">
+                                                    <div class="row">
+                                                        <div class="col-md-3 form-group my-2">
+                                                            <label for="sim_min_reps">Min Replications:</label>
+                                                            <input type="number" class="form-control" id="sim_min_reps" value="5" min="1" max="100" />
+                                                        </div>
+                                                        <div class="col-md-3 form-group my-2">
+                                                            <label for="sim_max_reps">Max Replications:</label>
+                                                            <input type="number" class="form-control" id="sim_max_reps" value="50" min="5" max="500" />
+                                                        </div>
+                                                        <div class="col-md-3 form-group my-2">
+                                                            <label for="sim_target_rel_error">Target Rel Error:</label>
+                                                            <input type="number" class="form-control" id="sim_target_rel_error" value="0.02" step="0.005" min="0.001" max="0.1" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="row border-top pt-2 mt-2">
+                                                        <div class="col-md-6 form-group my-2">
+                                                            <label class="d-block font-weight-bold">Simulation Limit Criterion (Mutually Exclusive):</label>
+                                                            <div class="form-check form-check-inline">
+                                                                <input class="form-check-input" type="radio" name="sim_limit_type" id="limit_by_time" value="time" checked>
+                                                                <label class="form-check-label" for="limit_by_time">Simulation Time (s)</label>
+                                                            </div>
+                                                            <div class="form-check form-check-inline">
+                                                                <input class="form-check-input" type="radio" name="sim_limit_type" id="limit_by_instances" value="instances">
+                                                                <label class="form-check-label" for="limit_by_instances">Instance Number</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6 form-group my-2" id="sim_time_group">
+                                                            <label for="sim_time_sec">Simulation Time (s):</label>
+                                                            <input type="number" class="form-control" id="sim_time_sec" value="7776000" min="86400" />
+                                                        </div>
+                                                        <div class="col-md-6 form-group my-2" id="sim_instances_group" style="display: none;">
+                                                            <label for="sim_max_instances">Instance Number:</label>
+                                                            <input type="number" class="form-control" id="sim_max_instances" value="1000" min="1" placeholder="e.g. 1000" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <button type="button" class="btn btn-success mt-3" id="btnRunSimulations">Run Data Gathering Simulations</button>
                                     <div id="simStatusMsg" class="mt-3"></div>
                                 </form>
@@ -244,15 +294,16 @@
                         <!-- Step 3: Train Neural Network Surrogate -->
                         <div class="card border-info mb-4">
                             <div class="card-header bg-info text-white">
-                                <strong>Step 3 — Train NN Surrogate Model & View Metrics</strong>
+                                <strong>Step 3 — Train Surrogate Model & View Metrics</strong>
                             </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6 form-group my-2">
                                         <label for="model_type_select">Model Architecture:</label>
                                         <select class="form-control" id="model_type_select" name="model_type">
-                                            <option value="simple">Simple Neural Network (Default)</option>
-                                            <option value="lr">Linear Regression (Baseline)</option>
+                                            <option value="lightgbm" selected>Hypertuned LightGBM Model</option>
+                                            <option value="simple">Simple Neural Network</option>
+                                            <option value="lr">Linear Regression</option>
                                             <option value="complex">Complex Hypertuned NN</option>
                                             <option value="deep">Deep Hypertuned Network</option>
                                         </select>
@@ -262,6 +313,90 @@
                                         <input type="number" class="form-control" id="train_num" name="train_num" value="4000" min="10" />
                                     </div>
                                 </div>
+
+                                <div class="accordion mt-2" id="advTrainAccordion">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingTrainAdv">
+                                            <button class="accordion-button collapsed py-2 text-dark bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTrainAdv">
+                                                <small class="font-weight-bold">Training Options</small>
+                                            </button>
+                                        </h2>
+                                        <div id="collapseTrainAdv" class="accordion-collapse collapse" data-bs-parent="#advTrainAccordion">
+                                                <!-- 1. Hypertuned LightGBM Model Options -->
+                                                <div class="row opt-group-lgb" id="opts_lightgbm">
+                                                    <div class="col-md-4 form-group my-2">
+                                                        <label for="lgb_val_split">Train-Test Split Ratio:</label>
+                                                        <input type="number" class="form-control" id="lgb_val_split" value="0.20" step="0.05" min="0.05" max="0.50" />
+                                                    </div>
+                                                    <div class="col-md-4 form-group my-2">
+                                                        <label for="lgb_epochs">Training Iterations:</label>
+                                                        <input type="number" class="form-control" id="lgb_epochs" value="500" min="10" max="10000" step="50" />
+                                                    </div>
+                                                    <div class="col-md-4 form-group my-2">
+                                                        <label for="lgb_patience">Early Stopping Patience:</label>
+                                                        <input type="number" class="form-control" id="lgb_patience" value="50" min="5" max="500" step="5" />
+                                                    </div>
+                                                </div>
+
+                                                <!-- 2. Simple Neural Network Options -->
+                                                <div class="row opt-group-simple" id="opts_simple" style="display: none;">
+                                                    <div class="col-md-4 form-group my-2">
+                                                        <label for="simple_val_split">Train-Test Split Ratio:</label>
+                                                        <input type="number" class="form-control" id="simple_val_split" value="0.20" step="0.05" min="0.05" max="0.50" />
+                                                    </div>
+                                                    <div class="col-md-4 form-group my-2">
+                                                        <label for="simple_epochs">Training Epochs:</label>
+                                                        <input type="number" class="form-control" id="simple_epochs" value="2500" min="10" max="20000" step="50" />
+                                                    </div>
+                                                    <div class="col-md-4 form-group my-2">
+                                                        <label for="simple_patience">Early Stopping Patience:</label>
+                                                        <input type="number" class="form-control" id="simple_patience" value="200" min="10" max="2000" step="10" />
+                                                    </div>
+                                                </div>
+
+                                                <!-- 3. Linear Regression Options -->
+                                                <div class="row opt-group-lr" id="opts_lr" style="display: none;">
+                                                    <div class="col-md-12 form-group my-2">
+                                                        <label for="lr_val_split">Train-Test Split Ratio:</label>
+                                                        <input type="number" class="form-control" id="lr_val_split" value="0.20" step="0.05" min="0.05" max="0.50" />
+                                                    </div>
+                                                </div>
+
+                                                <!-- 4. Complex Hypertuned NN Options -->
+                                                <div class="row opt-group-complex" id="opts_complex" style="display: none;">
+                                                    <div class="col-md-4 form-group my-2">
+                                                        <label for="complex_val_split">Train-Test Split Ratio:</label>
+                                                        <input type="number" class="form-control" id="complex_val_split" value="0.20" step="0.05" min="0.05" max="0.50" />
+                                                    </div>
+                                                    <div class="col-md-4 form-group my-2">
+                                                        <label for="complex_epochs">Training Epochs:</label>
+                                                        <input type="number" class="form-control" id="complex_epochs" value="2500" min="10" max="20000" step="50" />
+                                                    </div>
+                                                    <div class="col-md-4 form-group my-2">
+                                                        <label for="complex_patience">Early Stopping Patience:</label>
+                                                        <input type="number" class="form-control" id="complex_patience" value="200" min="10" max="2000" step="10" />
+                                                    </div>
+                                                </div>
+
+                                                <!-- 5. Deep Hypertuned Network Options -->
+                                                <div class="row opt-group-deep" id="opts_deep" style="display: none;">
+                                                    <div class="col-md-4 form-group my-2">
+                                                        <label for="deep_val_split">Train-Test Split Ratio:</label>
+                                                        <input type="number" class="form-control" id="deep_val_split" value="0.20" step="0.05" min="0.05" max="0.50" />
+                                                    </div>
+                                                    <div class="col-md-4 form-group my-2">
+                                                        <label for="deep_epochs">Training Epochs:</label>
+                                                        <input type="number" class="form-control" id="deep_epochs" value="2500" min="10" max="20000" step="50" />
+                                                    </div>
+                                                    <div class="col-md-4 form-group my-2">
+                                                        <label for="deep_patience">Early Stopping Patience:</label>
+                                                        <input type="number" class="form-control" id="deep_patience" value="200" min="10" max="2000" step="10" />
+                                                    </div>
+                                                </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <button type="button" class="btn btn-info text-white mt-3" id="btnTrainNN">Train Surrogate Model</button>
                                 <div id="trainStatusMsg" class="mt-3"></div>
 
@@ -286,10 +421,10 @@
                             </div>
                         </div>
 
-                        <!-- Step 4: Targeted Neural Network Optimizer -->
+                        <!-- Step 4: Targeted KPI Predictor Optimizer -->
                         <div class="card border-warning mb-4">
                             <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-                                <strong>Step 4 — Targeted Neural Network Optimizer & ROI Validation</strong>
+                                <strong>Step 4 — Targeted KPI Predictor Optimizer & ROI Validation</strong>
                             </div>
                             <div class="card-body">
                                 <!-- Baseline KPI Computation -->
@@ -352,19 +487,35 @@
                                 </div>
 
                                 <!-- Priority Weights & Parameter Variation Constraints -->
-                                <h6 class="text-dark">3. Optimization Constraints & Priority Weights</h6>
+                                <h6 class="text-dark">3. Optimization Model & Advanced Constraints</h6>
                                 <div class="row bg-light p-3 rounded mb-3 border">
+                                    <div class="col-md-6 form-group my-2">
+                                        <label for="opt_model_type_select">Optimizer Model Choice:</label>
+                                        <select class="form-control" id="opt_model_type_select" name="opt_model_type">
+                                            <option value="lightgbm" selected>Hypertuned LightGBM Model</option>
+                                            <option value="simple">Simple Neural Network</option>
+                                            <option value="complex">Complex Hypertuned NN</option>
+                                            <option value="deep">Deep Hypertuned Network</option>
+                                        </select>
+                                    </div>
                                     <div class="col-md-6 form-group my-2">
                                         <label for="max_param_change_pct">Max Parameter Variation Limit (±%):</label>
                                         <div class="input-group">
                                             <input type="number" class="form-control" id="max_param_change_pct" name="max_param_change_pct" value="50" min="5" max="200" step="5" />
                                             <span class="input-group-text">%</span>
                                         </div>
-                                        <small class="form-text text-muted">Constrains parameters from changing more than ±X% from original baseline values.</small>
                                     </div>
-                                    <div class="col-md-6 form-group my-2">
-                                        <label for="optimize_iterations">Optimizer Epochs / Iterations:</label>
-                                        <input type="number" class="form-control" id="optimize_iterations" name="optimize_iterations" value="10000" min="500" max="50000" />
+                                    <div class="col-md-4 form-group my-2">
+                                        <label for="optimize_iterations">Optimizer Iterations / Epochs:</label>
+                                        <input type="number" class="form-control" id="optimize_iterations" name="optimize_iterations" value="1000" min="50" max="50000" />
+                                    </div>
+                                    <div class="col-md-4 form-group my-2">
+                                        <label for="opt_num_starts">Multi-Start Candidates:</label>
+                                        <input type="number" class="form-control" id="opt_num_starts" value="5000" min="50" max="50000" />
+                                    </div>
+                                    <div class="col-md-4 form-group my-2">
+                                        <label for="opt_num_reps">Ground-Truth Sim Reps:</label>
+                                        <input type="number" class="form-control" id="opt_num_reps" value="50" min="5" max="500" />
                                     </div>
 
                                     <div class="col-md-4 form-group mt-3">
@@ -448,184 +599,70 @@
                 return new bootstrap.Tab(tabTriggerEl);
             });
 
-            tabTriggerList.forEach(function (tabTriggerEl) {
-                tabTriggerEl.addEventListener("click", function (event) {
-                    event.preventDefault();
-                    let tab = new bootstrap.Tab(tabTriggerEl);
-                    tab.show();
-                });
-            });
-        });
-
-        // Dynamically change form action based on selected tab 
-        document.getElementById("extractorForm").addEventListener("submit", function(event) {
-            this.action = "/extractor";
-        });
-
-        document.getElementById("simulatorForm").addEventListener("submit", function(event) {
-            this.action = "/simulator";
-        });
-
-        // ---- utilities ----
-        function clearSelect(sel) {
-            while (sel && sel.options && sel.options.length > 0) sel.remove(0);
-        }
-        function toUniqueSorted(arr, numeric=false) {
-            const out = [...new Set(arr)];
-            return numeric ? out.sort((a,b)=>Number(a)-Number(b)) : out.sort();
-        }
-
-        // ---- carica scenari per root selezionata (pulisce + deduplica) ----
-        async function loadScenariosForRoot(root) {
-            const sel = document.getElementById('whatif_scenarios');
-            if (!sel) return;
-            clearSelect(sel);
-            if (!root) return;
-
-            const r = await fetch(`/whatif/scenarios?root=${encodeURIComponent(root)}`, { cache: 'no-store' });
-            if (!r.ok) return;
-            let arr = await r.json();
-            arr = toUniqueSorted(arr, /*numeric=*/true);
-
-            for (const s of arr) {
-            const opt = document.createElement('option');
-            opt.value = s; opt.textContent = s;
-            sel.appendChild(opt);
-            }
-        }
-
-        // ---- ricarica roots + carica scenari della root selezionata ----
-        async function refreshRootsAndScenarios(selectRootValue) {
-            const rootSel = document.getElementById('whatif_root');
-            const scenSel = document.getElementById('whatif_scenarios');
-            if (!rootSel || !scenSel) return;
-
-            try {
-            const r = await fetch('/whatif/roots', { cache: 'no-store' });
-            if (!r.ok) throw new Error('Cannot load roots');
-            let roots = await r.json();
-            roots = toUniqueSorted(roots);
-
-            clearSelect(rootSel);
-            for (const rr of roots) {
-                const opt = document.createElement('option');
-                opt.value = rr; opt.textContent = rr;
-                rootSel.appendChild(opt);
-            }
-
-            // seleziona root passata (se esiste), altrimenti prima disponibile
-            if (selectRootValue && roots.includes(selectRootValue)) {
-                rootSel.value = selectRootValue;
-            } else if (roots.length) {
-                rootSel.value = roots[0];
-            }
-
-            // ora carica gli scenari per la root selezionata
-            await loadScenariosForRoot(rootSel.value);
-            } catch (e) {
-            console.warn(e);
-            }
-        }
-
-        // ---- BIND una sola volta agli eventi ----
-        if (!window.__whatif_bound) {
-            window.__whatif_bound = true;
-
-            // Cambio root: ricarica scenari
-            document.getElementById('whatif_root')?.addEventListener('change', (e) => {
-            loadScenariosForRoot(e.target.value);
-            });
-
-            // Submit Start What-If: valida almeno 1 scenario e crea hidden CSV
-            document.getElementById('whatifStartForm')?.addEventListener('submit', function (e) {
-                const sel = document.getElementById('whatif_scenarios');
-                const selected = Array.from(sel.selectedOptions).map(o => o.value);
-                if (selected.length < 1) {
-                    e.preventDefault();
-                    alert('Seleziona almeno uno scenario.');
-                    return false;
-                }
-                // crea/aggiorna hidden field
-                let hidden = this.querySelector('input[name="scenarios_csv"]');
-                if (!hidden) {
-                    hidden = document.createElement('input');
-                    hidden.type = 'hidden'; hidden.name = 'scenarios_csv';
-                    this.appendChild(hidden);
-                }
-                hidden.value = selected.join(',');
-            });
-
-
-            // Upload ZIP (via fetch) + refresh roots/scenari senza ricaricare la pagina
-            document.getElementById('whatifZipForm')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.currentTarget;
-            const btn = document.getElementById('btnUploadZip') || form.querySelector('button[type="submit"]');
-            const spin = document.getElementById('zipUploading');
-            const msg = document.getElementById('zipMsg');
-
-            if (msg) msg.innerHTML = '';
-            if (btn) btn.disabled = true;
-            if (spin) spin.style.display = 'inline';
-
-            try {
-                const fd = new FormData(form);
-                const res = await fetch('/whatif/upload-zip', { method: 'POST', body: fd });
-                const data = await res.json();
-
-                if (!res.ok || !data?.ok) {
-                if (msg) msg.innerHTML = `<div class="alert alert-danger">Upload failed: ${data?.message || res.status}</div>`;
-                return;
-                }
-
-                const newRoot = data.root;
-                if (msg) msg.innerHTML = `<div class="alert alert-success">ZIP uploaded ✔ — root: <code>${newRoot}</code></div>`;
-
-                // aggiorna roots + scenari selezionando la nuova root
-                await refreshRootsAndScenarios(newRoot);
-            } catch (err) {
-                if (msg) msg.innerHTML = `<div class="alert alert-danger">Unexpected error during upload.</div>`;
-                console.error(err);
-            } finally {
-                if (btn) btn.disabled = false;
-                if (spin) spin.style.display = 'none';
-            }
-            });
-
-            // Al primo load: se c'è già una root selezionata dal render server, sincronizza gli scenari
-            document.addEventListener('DOMContentLoaded', () => {
-            const rootSel = document.getElementById('whatif_root');
-            if (rootSel && rootSel.value) {
-                // Popola client-side una volta, sostituendo eventuali duplicazioni
-                refreshRootsAndScenarios(rootSel.value);
-            }
-            });
-            // --- NN-KPI Predictor JavaScript Handlers ---
+            // Handle file upload form
             document.getElementById('nnkpiUploadForm')?.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const msg = document.getElementById('nnkpiUploadMsg');
-                msg.innerHTML = '<div class="text-muted">Uploading configuration files...</div>';
+                msg.innerHTML = '<div class="alert alert-info py-1 mt-1">Uploading...</div>';
+                const fd = new FormData(e.target);
                 try {
-                    const fd = new FormData(e.target);
                     const res = await fetch('/nnkpi/upload', { method: 'POST', body: fd });
                     const data = await res.json();
-                    if (res.ok && data.status === 'success') {
-                        msg.innerHTML = '<div class="alert alert-success">Configuration files uploaded successfully!</div>';
+                    if (res.ok) {
+                        msg.innerHTML = '<div class="alert alert-success py-1 mt-1">Uploaded successfully!</div>';
                     } else {
-                        msg.innerHTML = `<div class="alert alert-danger">Error: ${data.error || 'Upload failed'}</div>`;
+                        msg.innerHTML = `<div class="alert alert-danger py-1 mt-1">${data.error || 'Upload failed'}</div>`;
                     }
                 } catch (err) {
-                    msg.innerHTML = `<div class="alert alert-danger">Upload failed: ${err}</div>`;
+                    msg.innerHTML = `<div class="alert alert-danger py-1 mt-1">Error: ${err}</div>`;
                 }
             });
 
-            // Trigger Simulation Data Gathering
+            // Simulation limit type toggle (Simulation Time vs Instance Number)
+            document.querySelectorAll('input[name="sim_limit_type"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const timeGroup = document.getElementById('sim_time_group');
+                    const instancesGroup = document.getElementById('sim_instances_group');
+                    if (e.target.value === 'instances') {
+                        timeGroup.style.display = 'none';
+                        instancesGroup.style.display = 'block';
+                    } else {
+                        timeGroup.style.display = 'block';
+                        instancesGroup.style.display = 'none';
+                    }
+                });
+            });
+
+            // Model Training options visibility switcher
+            const updateTrainOptionsVisibility = () => {
+                const modelType = document.getElementById('model_type_select')?.value || 'lightgbm';
+                const modelOptionIds = ['opts_lightgbm', 'opts_simple', 'opts_lr', 'opts_complex', 'opts_deep'];
+                
+                modelOptionIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.style.display = (id === `opts_${modelType}`) ? 'flex' : 'none';
+                    }
+                });
+            };
+
+            document.getElementById('model_type_select')?.addEventListener('change', updateTrainOptionsVisibility);
+            updateTrainOptionsVisibility();
+
+            // Trigger Data Gathering Simulation
             document.getElementById('btnRunSimulations')?.addEventListener('click', async () => {
                 const statusDiv = document.getElementById('simStatusMsg');
                 statusDiv.innerHTML = '<div class="alert alert-info">Initiating simulation data gathering...</div>';
+                
+                const limitType = document.querySelector('input[name="sim_limit_type"]:checked')?.value || 'time';
                 const payload = {
                     num_scenarios: parseInt(document.getElementById('num_scenarios').value) || 50,
-                    workers: parseInt(document.getElementById('workers_num').value) || 2
+                    workers: parseInt(document.getElementById('workers_num').value) || 2,
+                    min_reps: parseInt(document.getElementById('sim_min_reps')?.value) || 5,
+                    max_reps: parseInt(document.getElementById('sim_max_reps')?.value) || 50,
+                    target_rel_error: parseFloat(document.getElementById('sim_target_rel_error')?.value) || 0.02,
+                    simulation_time: limitType === 'time' ? (parseInt(document.getElementById('sim_time_sec')?.value) || 7776000) : null,
+                    max_instances: limitType === 'instances' ? (parseInt(document.getElementById('sim_max_instances')?.value) || 1000) : null
                 };
                 try {
                     const res = await fetch('/nnkpi/simulate', {
@@ -645,14 +682,36 @@
                 }
             });
 
-            // Trigger NN Training
+            // Trigger Model Training
             document.getElementById('btnTrainNN')?.addEventListener('click', async () => {
                 const statusDiv = document.getElementById('trainStatusMsg');
-                statusDiv.innerHTML = '<div class="alert alert-info">Initiating Neural Network model training...</div>';
+                statusDiv.innerHTML = '<div class="alert alert-info">Initiating model training...</div>';
+                const modelType = document.getElementById('model_type_select').value || 'lightgbm';
                 const payload = {
                     train_num: parseInt(document.getElementById('train_num').value) || 4000,
-                    model_type: document.getElementById('model_type_select').value || 'simple'
+                    model_type: modelType
                 };
+
+                if (modelType === 'lightgbm') {
+                    payload.val_split = parseFloat(document.getElementById('lgb_val_split')?.value) || 0.20;
+                    payload.n_estimators = parseInt(document.getElementById('lgb_epochs')?.value) || 500;
+                    payload.early_stopping_rounds = parseInt(document.getElementById('lgb_patience')?.value) || 50;
+                } else if (modelType === 'simple') {
+                    payload.val_split = parseFloat(document.getElementById('simple_val_split')?.value) || 0.20;
+                    payload.epochs = parseInt(document.getElementById('simple_epochs')?.value) || 2500;
+                    payload.patience = parseInt(document.getElementById('simple_patience')?.value) || 200;
+                } else if (modelType === 'lr') {
+                    payload.val_split = parseFloat(document.getElementById('lr_val_split')?.value) || 0.20;
+                } else if (modelType === 'complex') {
+                    payload.val_split = parseFloat(document.getElementById('complex_val_split')?.value) || 0.20;
+                    payload.epochs = parseInt(document.getElementById('complex_epochs')?.value) || 2500;
+                    payload.patience = parseInt(document.getElementById('complex_patience')?.value) || 200;
+                } else if (modelType === 'deep') {
+                    payload.val_split = parseFloat(document.getElementById('deep_val_split')?.value) || 0.20;
+                    payload.epochs = parseInt(document.getElementById('deep_epochs')?.value) || 2500;
+                    payload.patience = parseInt(document.getElementById('deep_patience')?.value) || 200;
+                }
+
                 try {
                     const res = await fetch('/nnkpi/train', {
                         method: 'POST',
@@ -739,17 +798,22 @@
             // Trigger NN Optimization
             document.getElementById('btnOptimizeNN')?.addEventListener('click', async () => {
                 const statusDiv = document.getElementById('optimizeStatusMsg');
-                statusDiv.innerHTML = '<div class="alert alert-info">Initiating Targeted Neural Network Optimization...</div>';
+                statusDiv.innerHTML = '<div class="alert alert-info">Initiating Targeted Optimization...</div>';
                 const payload = {
-                    model_type: document.getElementById('model_type_select')?.value || 'simple',
-                    max_iterations: parseInt(document.getElementById('optimize_iterations').value) || 10000,
+                    model_type: document.getElementById('opt_model_type_select')?.value || document.getElementById('model_type_select')?.value || 'lightgbm',
+                    max_iterations: parseInt(document.getElementById('optimize_iterations').value) || 1000,
                     max_param_change_pct: parseFloat(document.getElementById('max_param_change_pct').value) || 50.0,
                     weight_cost: parseFloat(document.getElementById('weight_cost').value) || 33.0,
                     weight_cycle: parseFloat(document.getElementById('weight_cycle').value) || 33.0,
                     weight_waiting: parseFloat(document.getElementById('weight_waiting').value) || 34.0,
                     target_cost: parseFloat(document.getElementById('target_cost_input').value) || null,
                     target_cycle: parseFloat(document.getElementById('target_cycle_input').value) || null,
-                    target_waiting: parseFloat(document.getElementById('target_wait_input').value) || null
+                    target_waiting: parseFloat(document.getElementById('target_wait_input').value) || null,
+                    target_cost_pct: parseFloat(document.getElementById('target_cost_pct').value) || -10.0,
+                    target_cycle_pct: parseFloat(document.getElementById('target_cycle_pct').value) || -10.0,
+                    target_wait_pct: parseFloat(document.getElementById('target_wait_pct').value) || -10.0,
+                    num_reps: parseInt(document.getElementById('opt_num_reps')?.value) || 50,
+                    num_starts: parseInt(document.getElementById('opt_num_starts')?.value) || 5000
                 };
                 try {
                     const res = await fetch('/nnkpi/optimize', {

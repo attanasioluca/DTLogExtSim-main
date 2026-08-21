@@ -15,10 +15,11 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')
 if parent_dir not in sys.path: sys.path.append(parent_dir)
 
 from hypertuned_model import (
-    PharmacySurrogate,
+    SurrogateModel,
     NON_FEATURE_COLS,
     CONVERGENCE_FLAGS,
     DROPOUT_RATE,
+    load_hyperparameters,
     inverse_transform_targets,
     inverse_transform_targets_torch
 )
@@ -37,28 +38,27 @@ def evaluate_scenario(scenario_data, full_model, process_details, num_reps=50):
 # ==========================================
 # MAIN PIPELINE
 # ==========================================
-def main(SOURCE="real"):
-    # --- CONFIGURATION ---
-    MAX_Z_SCORE = 3.0           
+def main(
+    SOURCE="synthetic",
+    num_reps=50,
+    cost_pct=-10.0,
+    cycle_pct=-10.0,
+    wait_pct=-10.0,
+    max_z_score=3.0,
+    num_starts=500,
+    epochs=10000,
+    lr=0.1
+):
+    MAX_Z_SCORE = max_z_score           
     
     BASE_FILE = f"data/{SOURCE}/model/scenario.json"
     MODEL_FILE = f"data/{SOURCE}/model/model.json"
     DATA_FILE = f"data/{SOURCE}/sim_data_waiting_times.csv" 
     
-    # STEP 0: LOAD FILES & PREP DYNAMIC TARGETS
-    print("[0/4] Loading dataset to determine realistic targets...")
+    # STEP 0: LOAD FILES & INITIALIZE DATASET
+    print("[0/4] Loading scenario files and dataset...")
     df_all = pd.read_csv(DATA_FILE)
-    
     df = df_all[df_all[CONVERGENCE_FLAGS].all(axis=1)].reset_index(drop=True)
-    
-    TARGET_COST = df['kpi_total_cost'].quantile(0.05)
-    TARGET_DURATION = df['kpi_cycle_time'].quantile(0.05)
-    TARGET_WAIT_TIME = df['kpi_waiting_time'].quantile(0.5)
-    
-    print(f"--- DYNAMIC TARGETS (5th Percentile) ---")
-    print(f"Goal Cost:       ${TARGET_COST:.2f}")
-    print(f"Goal Cycle Time: {TARGET_DURATION:.1f} seconds")
-    print(f"Goal Wait Time:  {TARGET_WAIT_TIME:.1f} seconds\n")
 
     with open(BASE_FILE, 'r') as f: base_json = json.load(f)
     with open(MODEL_FILE, 'r') as f: full_model = json.load(f)
@@ -76,18 +76,29 @@ def main(SOURCE="real"):
         if "previous" in node and node["previous"]:
             node["previous"] = [p for p in node["previous"] if p in valid_node_ids]
 
+    # STEP 1: EVALUATE BASELINE SCENARIO & COMPUTE TARGETS
     print("[1/4] Running Ground-Truth SimPy Evaluation on BASELINE...")
     base_true_cost, base_true_duration, base_true_wait = evaluate_scenario(
-        baseline_scenario, full_model, process_details, num_reps=50
+        baseline_scenario, full_model, process_details, num_reps=num_reps
     )
 
-    print("\n[2/4] Running High-Speed Neural Network Optimizer...")
+    TARGET_COST = base_true_cost * (1.0 + cost_pct / 100.0)
+    TARGET_DURATION = base_true_duration * (1.0 + cycle_pct / 100.0)
+    TARGET_WAIT_TIME = base_true_wait * (1.0 + wait_pct / 100.0)
+
+    print(f"\n--- TARGET KPI GOALS (Relative to Baseline) ---")
+    print(f"Baseline Cost:       ${base_true_cost:.2f} -> Target ({'+' if cost_pct >= 0 else ''}{cost_pct:.1f}%): ${TARGET_COST:.2f}")
+    print(f"Baseline Cycle Time: {base_true_duration:.1f}s -> Target ({'+' if cycle_pct >= 0 else ''}{cycle_pct:.1f}%): {TARGET_DURATION:.1f}s")
+    print(f"Baseline Wait Time:  {base_true_wait:.1f}s -> Target ({'+' if wait_pct >= 0 else ''}{wait_pct:.1f}%): {TARGET_WAIT_TIME:.1f}s\n")
+
+    # STEP 2: NEURAL NETWORK OPTIMIZATION
+    print("[2/4] Running High-Speed Neural Network Optimizer...")
     x_scaler = joblib.load(f'models/complex_model/output/{SOURCE}/x_scaler.pkl')
     y_scaler = joblib.load(f'models/complex_model/output/{SOURCE}/y_scaler.pkl')
-    
     device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
-    
-    model = PharmacySurrogate(x_scaler.n_features_in_, DROPOUT_RATE=DROPOUT_RATE).to(device)
+
+    params = load_hyperparameters(source=SOURCE)
+    model = SurrogateModel(x_scaler.n_features_in_, DROPOUT_RATE=params["dropout_rate"]).to(device)
     model.load_state_dict(torch.load(f'models/complex_model/output/{SOURCE}/surrogate_model.pth', map_location=device, weights_only=True))
     model.eval()
     for param in model.parameters(): param.requires_grad = False
@@ -101,7 +112,7 @@ def main(SOURCE="real"):
     min_scaled_bounds = torch.tensor(x_scaler.transform(raw_min_array), dtype=torch.float32, device=device)
     max_scaled_bounds = torch.tensor(x_scaler.transform(raw_max_array), dtype=torch.float32, device=device)
     
-    NUM_STARTS = 500
+    NUM_STARTS = num_starts
     rand_starts = min_scaled_bounds + torch.rand((NUM_STARTS - 1, len(X_cols)), device=device) * (max_scaled_bounds - min_scaled_bounds)
     base_tensor = torch.tensor(x_scaler.transform(X_df.iloc[0].values.reshape(1, -1)), dtype=torch.float32, device=device)
     
@@ -113,13 +124,13 @@ def main(SOURCE="real"):
     y_mean_tensor = torch.tensor(y_scaler.mean_, dtype=torch.float32, device=device)
     y_scale_tensor = torch.tensor(y_scaler.scale_, dtype=torch.float32, device=device)
 
-    optimizer = optim.Adam([x_optim], lr=0.1)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10000, eta_min=1e-4)
+    optimizer = optim.Adam([x_optim], lr=lr)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-4)
     
     best_global_loss = float('inf')
     best_x_optimal = None
 
-    for epoch in range(10000):
+    for epoch in range(epochs):
         optimizer.zero_grad()
         predictions = model(x_optim)
         
@@ -140,7 +151,7 @@ def main(SOURCE="real"):
         fractional_penalty = torch.sum(torch.sin(np.pi * res_amounts) ** 2, dim=1)
         z_score_penalty = torch.sum(torch.relu(torch.abs(x_optim) - MAX_Z_SCORE) ** 2, dim=1)
         
-        integer_weight = max(0.0, (epoch - 5000) / 5000.0) * 1000.0 
+        integer_weight = max(0.0, (epoch - (epochs // 2)) / (epochs // 2)) * 1000.0 
         loss = (10000.0 * kpi_loss) + (integer_weight * fractional_penalty) + (0.5 * z_score_penalty)
         
         min_loss_in_batch, min_idx = torch.min(loss), torch.argmin(loss)
@@ -155,6 +166,7 @@ def main(SOURCE="real"):
 
     optimized_x_raw = x_scaler.inverse_transform(best_x_optimal.cpu().numpy().reshape(1, -1))[0]
 
+    # STEP 3: INJECT OPTIMIZED PARAMETERS
     print("[3/4] Injecting Optimized Parameters...")
     opt_scenario = copy.deepcopy(baseline_scenario)
     discretized_x_raw = np.copy(optimized_x_raw)
@@ -194,9 +206,10 @@ def main(SOURCE="real"):
     nn_pred_dur_mean = final_pred[1]
     nn_pred_wait_mean = final_pred[2]
 
+    # STEP 4: GROUND-TRUTH SIMULATION VALIDATION
     print("[4/4] Running Ground-Truth SimPy Evaluation on OPTIMIZED...")
     opt_true_cost, opt_true_duration, opt_true_wait = evaluate_scenario(
-        opt_scenario, full_model, process_details, num_reps=50
+        opt_scenario, full_model, process_details, num_reps=num_reps
     )
 
     print("\n=====================================================================")
@@ -216,23 +229,93 @@ def main(SOURCE="real"):
     
     base_x_raw = X_df.iloc[0].values
     changes_found = False
+    recommendations = []
     
     for i, col in enumerate(X_cols):
-        b_val = base_x_raw[i]
-        o_val = discretized_x_raw[i]
+        b_val = float(base_x_raw[i])
+        o_val = float(discretized_x_raw[i])
         
         if abs(b_val - o_val) > 0.01:
             changes_found = True
             if col.endswith("_amount"):
-                print(f"{col:<30} | Baseline: {int(b_val):<4} -> Optimized: {int(o_val)}")
+                b_val_out = int(round(b_val))
+                o_val_out = int(round(o_val))
+                print(f"{col:<30} | Baseline: {b_val_out:<4} -> Optimized: {o_val_out}")
             else:
-                print(f"{col:<30} | Baseline: {b_val:<7.2f} -> Optimized: {o_val:.2f}")
+                b_val_out = round(b_val, 2)
+                o_val_out = round(o_val, 2)
+                print(f"{col:<30} | Baseline: {b_val_out:<7.2f} -> Optimized: {o_val_out:.2f}")
+            recommendations.append({
+                "parameter": col,
+                "baseline": b_val_out,
+                "optimized": o_val_out
+            })
                 
     if not changes_found:
         print("No changes required. The baseline scenario already hits your targets.")
 
+    results_out = {
+        "settings": {
+            "max_param_change_pct": 50.0,
+            "weight_cost": 33.0,
+            "weight_cycle": 33.0,
+            "weight_waiting": 34.0
+        },
+        "target_goal": {
+            "cost": float(TARGET_COST),
+            "cycle_time": float(TARGET_DURATION),
+            "waiting_time": float(TARGET_WAIT_TIME)
+        },
+        "baseline": {
+            "cost": float(base_true_cost),
+            "cycle_time": float(base_true_duration),
+            "waiting_time": float(base_true_wait)
+        },
+        "nn_predicted": {
+            "cost": float(nn_pred_avg_cost),
+            "cycle_time": float(nn_pred_dur_mean),
+            "waiting_time": float(nn_pred_wait_mean)
+        },
+        "optimized": {
+            "cost": float(opt_true_cost),
+            "cycle_time": float(opt_true_duration),
+            "waiting_time": float(opt_true_wait)
+        },
+        "deltas": {
+            "end_cost": float(opt_true_cost - base_true_cost),
+            "end_cycle": float(opt_true_duration - base_true_duration),
+            "end_wait": float(opt_true_wait - base_true_wait)
+        },
+        "recommendations": recommendations
+    }
+
+    out_file = Path("models/output/optimizer_results.json")
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_file, "w") as f:
+        json.dump(results_out, f, indent=4)
+    print(f"\nOptimizer results exported to {out_file}")
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Run Complex Model Inverse Optimizer")
     parser.add_argument("source", nargs="?", default="synthetic", help="Dataset source (default: synthetic)")
+    parser.add_argument("--num_reps", type=int, default=50, help="SimPy simulation replications (default: 50)")
+    parser.add_argument("--cost_pct", type=float, default=-10.0, help="Target cost %% change relative to baseline (+10 increases, -10 decreases, default: -10.0)")
+    parser.add_argument("--cycle_pct", type=float, default=-10.0, help="Target cycle time %% change relative to baseline (+10 increases, -10 decreases, default: -10.0)")
+    parser.add_argument("--wait_pct", type=float, default=-10.0, help="Target waiting time %% change relative to baseline (+10 increases, -10 decreases, default: -10.0)")
+    parser.add_argument("--max_z_score", type=float, default=3.0, help="Max Z-score bound penalty threshold (default: 3.0)")
+    parser.add_argument("--num_starts", type=int, default=500, help="Multi-start candidate initializations (default: 500)")
+    parser.add_argument("--epochs", type=int, default=10000, help="Max optimization epochs (default: 10000)")
+    parser.add_argument("--lr", type=float, default=0.1, help="Optimizer learning rate (default: 0.1)")
     args = parser.parse_args()
-    main(args.source)
+
+    main(
+        SOURCE=args.source,
+        num_reps=args.num_reps,
+        cost_pct=args.cost_pct,
+        cycle_pct=args.cycle_pct,
+        wait_pct=args.wait_pct,
+        max_z_score=args.max_z_score,
+        num_starts=args.num_starts,
+        epochs=args.epochs,
+        lr=args.lr
+    )

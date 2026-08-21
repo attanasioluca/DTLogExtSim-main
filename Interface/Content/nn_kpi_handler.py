@@ -26,6 +26,7 @@ def get_session_dir(upload_folder):
     os.makedirs(os.path.join(session_dir, "models", "LR_model", "output", "synthetic"), exist_ok=True)
     os.makedirs(os.path.join(session_dir, "models", "complex_model", "output", "synthetic"), exist_ok=True)
     os.makedirs(os.path.join(session_dir, "models", "deep_network", "output", "synthetic"), exist_ok=True)
+    os.makedirs(os.path.join(session_dir, "models", "lightgbm_model", "output", "synthetic"), exist_ok=True)
     os.makedirs(os.path.join(session_dir, "models", "output"), exist_ok=True)
     return session_dir
 
@@ -42,7 +43,7 @@ def save_uploaded_files(model_file, scenario_file, upload_folder, data_file=None
         data_file.save(data_dst)
     return {"status": "success", "session_dir": session_dir}
 
-def _run_simulation_thread(session_dir, num_scenarios, workers):
+def _run_simulation_thread(session_dir, num_scenarios, workers, min_reps=5, max_reps=50, target_rel_error=0.02, simulation_time=7776000, max_instances=None):
     global STATUS
     STATUS["simulation"] = {"running": True, "progress": "Starting simulation data gathering...", "error": None, "completed": False}
     try:
@@ -60,8 +61,17 @@ def _run_simulation_thread(session_dir, num_scenarios, workers):
             data_gathering_script,
             "--source", "synthetic",
             "--num_scenarios", str(num_scenarios),
-            "--workers", str(workers)
+            "--workers", str(workers),
+            "--min_reps", str(min_reps),
+            "--max_reps", str(max_reps),
+            "--target_rel_error", str(target_rel_error),
         ]
+        if max_instances is not None:
+            cmd.extend(["--max_instances", str(max_instances)])
+        elif simulation_time is not None:
+            cmd.extend(["--simulation_time", str(simulation_time)])
+        else:
+            cmd.extend(["--simulation_time", "7776000"])
 
         env = os.environ.copy()
         env["PYTHONPATH"] = NN_KPI_DIR + os.pathsep + env.get("PYTHONPATH", "")
@@ -92,17 +102,17 @@ def _run_simulation_thread(session_dir, num_scenarios, workers):
     except Exception as e:
         STATUS["simulation"] = {"running": False, "progress": "", "error": str(e), "completed": False}
 
-def start_simulation(upload_folder, num_scenarios=10000, workers=8):
+def start_simulation(upload_folder, num_scenarios=10000, workers=8, min_reps=5, max_reps=50, target_rel_error=0.02, simulation_time=7776000, max_instances=None):
     session_dir = get_session_dir(upload_folder)
     if STATUS["simulation"]["running"]:
         return {"status": "busy", "message": "Simulation is already running"}
     
-    t = threading.Thread(target=_run_simulation_thread, args=(session_dir, num_scenarios, workers))
+    t = threading.Thread(target=_run_simulation_thread, args=(session_dir, num_scenarios, workers, min_reps, max_reps, target_rel_error, simulation_time, max_instances))
     t.daemon = True
     t.start()
     return {"status": "started", "message": "Simulation data gathering started"}
 
-def _run_training_thread(session_dir, train_num, model_type="simple"):
+def _run_training_thread(session_dir, train_num, model_type="simple", epochs=None, batch_size=None, patience=None, val_split=None, early_stopping_rounds=None, n_jobs=None, fit_intercept=None):
     global STATUS
     STATUS["training"] = {"running": True, "progress": f"Starting {model_type.upper()} model training...", "error": None, "completed": False}
     try:
@@ -110,7 +120,9 @@ def _run_training_thread(session_dir, train_num, model_type="simple"):
             "simple": os.path.join(NN_KPI_DIR, "models", "simple_model", "model.py"),
             "lr": os.path.join(NN_KPI_DIR, "models", "LR_model", "lr_model.py"),
             "complex": os.path.join(NN_KPI_DIR, "models", "complex_model", "hypertuned_model.py"),
-            "deep": os.path.join(NN_KPI_DIR, "models", "deep_network", "hypertuned_model.py")
+            "deep": os.path.join(NN_KPI_DIR, "models", "deep_network", "hypertuned_model.py"),
+            "lgbm": os.path.join(NN_KPI_DIR, "models", "lightgbm_model", "hypertuned_model.py"),
+            "lightgbm": os.path.join(NN_KPI_DIR, "models", "lightgbm_model", "hypertuned_model.py")
         }
         model_script = model_scripts.get(model_type, model_scripts["simple"])
         if not os.path.exists(model_script):
@@ -125,6 +137,20 @@ def _run_training_thread(session_dir, train_num, model_type="simple"):
 
         env = os.environ.copy()
         env["PYTHONPATH"] = NN_KPI_DIR + os.pathsep + env.get("PYTHONPATH", "")
+        if epochs is not None:
+            env["EPOCHS"] = str(epochs)
+        if batch_size is not None:
+            env["BATCH_SIZE"] = str(batch_size)
+        if patience is not None:
+            env["PATIENCE"] = str(patience)
+        if val_split is not None:
+            env["TEST_SIZE"] = str(val_split)
+        if early_stopping_rounds is not None:
+            env["EARLY_STOPPING_ROUNDS"] = str(early_stopping_rounds)
+        if n_jobs is not None:
+            env["N_JOBS"] = str(n_jobs)
+        if fit_intercept is not None:
+            env["FIT_INTERCEPT"] = "1" if fit_intercept else "0"
 
         proc = subprocess.Popen(
             cmd,
@@ -152,12 +178,12 @@ def _run_training_thread(session_dir, train_num, model_type="simple"):
         STATUS["training"] = {"running": False, "progress": "", "error": str(e), "completed": False}
 
 
-def start_training(upload_folder, train_num=4000, model_type="simple"):
+def start_training(upload_folder, train_num=4000, model_type="simple", epochs=None, batch_size=None, patience=None, val_split=None, early_stopping_rounds=None, n_jobs=None, fit_intercept=None):
     session_dir = get_session_dir(upload_folder)
     if STATUS["training"]["running"]:
         return {"status": "busy", "message": "Training is already running"}
 
-    t = threading.Thread(target=_run_training_thread, args=(session_dir, train_num, model_type))
+    t = threading.Thread(target=_run_training_thread, args=(session_dir, train_num, model_type, epochs, batch_size, patience, val_split, early_stopping_rounds, n_jobs, fit_intercept))
     t.daemon = True
     t.start()
     return {"status": "started", "message": f"{model_type.upper()} training started"}
@@ -168,7 +194,8 @@ def get_training_results(upload_folder):
         os.path.join(session_dir, "models", "output", "metrics_simple_nn.json"),
         os.path.join(session_dir, "models", "output", "metrics_lr_model.json"),
         os.path.join(session_dir, "models", "output", "metrics_complex_nn.json"),
-        os.path.join(session_dir, "models", "output", "metrics_deep_nn.json")
+        os.path.join(session_dir, "models", "output", "metrics_deep_nn.json"),
+        os.path.join(session_dir, "models", "output", "metrics_lgbm_model.json")
     ]
     all_metrics = []
     for mf in metrics_files:
@@ -233,31 +260,41 @@ def compute_baseline_kpis(upload_folder, num_reps=10):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-def _run_optimization_thread(session_dir, max_iterations, max_param_change_pct, weight_cost, weight_cycle, weight_waiting, target_cost=None, target_cycle=None, target_waiting=None, model_type="simple"):
+def _run_optimization_thread(session_dir, max_iterations=10000, max_param_change_pct=50.0, weight_cost=33.0, weight_cycle=33.0, weight_waiting=34.0, target_cost=None, target_cycle=None, target_waiting=None, model_type="simple", num_reps=50, num_starts=None, max_z_score=3.0, cost_pct=-10.0, cycle_pct=-10.0, wait_pct=-10.0):
     global STATUS
     STATUS["optimization"] = {"running": True, "progress": "Starting optimization...", "error": None, "completed": False}
     try:
-        optimizer_script = os.path.join(NN_KPI_DIR, "models", "simple_model", "optimizer.py")
+        optimizer_scripts = {
+            "simple": os.path.join(NN_KPI_DIR, "models", "simple_model", "optimizer.py"),
+            "lr": os.path.join(NN_KPI_DIR, "models", "simple_model", "optimizer.py"),
+            "complex": os.path.join(NN_KPI_DIR, "models", "complex_model", "optimizer.py"),
+            "deep": os.path.join(NN_KPI_DIR, "models", "deep_network", "optimizer.py"),
+            "lgbm": os.path.join(NN_KPI_DIR, "models", "lightgbm_model", "optimizer.py"),
+            "lightgbm": os.path.join(NN_KPI_DIR, "models", "lightgbm_model", "optimizer.py")
+        }
+        optimizer_script = optimizer_scripts.get(model_type, optimizer_scripts["simple"])
         if not os.path.exists(optimizer_script):
             raise FileNotFoundError(f"Optimizer script not found: {optimizer_script}")
+
+        if num_starts is None:
+            num_starts = 5000 if model_type in ["lgbm", "lightgbm"] else 500
 
         cmd = [
             sys.executable,
             optimizer_script,
             "synthetic",
-            "--max_iterations", str(max_iterations),
-            "--max_param_change_pct", str(max_param_change_pct),
-            "--weight_cost", str(weight_cost),
-            "--weight_cycle", str(weight_cycle),
-            "--weight_waiting", str(weight_waiting),
-            "--model_type", str(model_type)
+            "--num_reps", str(num_reps),
+            "--cost_pct", str(cost_pct),
+            "--cycle_pct", str(cycle_pct),
+            "--wait_pct", str(wait_pct),
+            "--max_z_score", str(max_z_score),
+            "--num_starts", str(num_starts)
         ]
-        if target_cost is not None and float(target_cost) > 0:
-            cmd.extend(["--target_cost", str(target_cost)])
-        if target_cycle is not None and float(target_cycle) > 0:
-            cmd.extend(["--target_cycle", str(target_cycle)])
-        if target_waiting is not None and float(target_waiting) > 0:
-            cmd.extend(["--target_waiting", str(target_waiting)])
+
+        if model_type in ["lgbm", "lightgbm"]:
+            cmd.extend(["--maxiter", str(max_iterations)])
+        else:
+            cmd.extend(["--epochs", str(max_iterations)])
 
         env = os.environ.copy()
         env["PYTHONPATH"] = NN_KPI_DIR + os.pathsep + env.get("PYTHONPATH", "")
@@ -287,7 +324,7 @@ def _run_optimization_thread(session_dir, max_iterations, max_param_change_pct, 
     except Exception as e:
         STATUS["optimization"] = {"running": False, "progress": "", "error": str(e), "completed": False}
 
-def start_optimization(upload_folder, max_iterations=10000, max_param_change_pct=50.0, weight_cost=33.0, weight_cycle=33.0, weight_waiting=34.0, target_cost=None, target_cycle=None, target_waiting=None, model_type=None):
+def start_optimization(upload_folder, max_iterations=10000, max_param_change_pct=50.0, weight_cost=33.0, weight_cycle=33.0, weight_waiting=34.0, target_cost=None, target_cycle=None, target_waiting=None, model_type=None, num_reps=50, num_starts=None, max_z_score=3.0, cost_pct=-10.0, cycle_pct=-10.0, wait_pct=-10.0):
     session_dir = get_session_dir(upload_folder)
     if STATUS["optimization"]["running"]:
         return {"status": "busy", "message": "Optimization is already running"}
@@ -297,11 +334,11 @@ def start_optimization(upload_folder, max_iterations=10000, max_param_change_pct
 
     t = threading.Thread(
         target=_run_optimization_thread,
-        args=(session_dir, max_iterations, max_param_change_pct, weight_cost, weight_cycle, weight_waiting, target_cost, target_cycle, target_waiting, model_type)
+        args=(session_dir, max_iterations, max_param_change_pct, weight_cost, weight_cycle, weight_waiting, target_cost, target_cycle, target_waiting, model_type, num_reps, num_starts, max_z_score, cost_pct, cycle_pct, wait_pct)
     )
     t.daemon = True
     t.start()
-    return {"status": "started", "message": "Targeted optimization started"}
+    return {"status": "started", "message": f"Targeted optimization started ({model_type.upper()})"}
 
 def get_optimization_status():
     return STATUS["optimization"]

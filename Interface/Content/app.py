@@ -600,7 +600,25 @@ def nnkpi_simulate():
     data = request.json or {}
     num_scenarios = int(data.get("num_scenarios", 10000))
     workers = int(data.get("workers", 8))
-    res = nn_kpi_handler.start_simulation(UPLOAD_FOLDER, num_scenarios, workers)
+    min_reps = int(data.get("min_reps", 5))
+    max_reps = int(data.get("max_reps", 50))
+    target_rel_error = float(data.get("target_rel_error", 0.02))
+    simulation_time = data.get("simulation_time")
+    if simulation_time is not None:
+        simulation_time = int(simulation_time)
+    max_instances = data.get("max_instances")
+    if max_instances is not None:
+        max_instances = int(max_instances)
+    res = nn_kpi_handler.start_simulation(
+        UPLOAD_FOLDER,
+        num_scenarios=num_scenarios,
+        workers=workers,
+        min_reps=min_reps,
+        max_reps=max_reps,
+        target_rel_error=target_rel_error,
+        simulation_time=simulation_time,
+        max_instances=max_instances
+    )
     return jsonify(res)
 
 @app.route("/nnkpi/status", methods=["GET"])
@@ -613,7 +631,25 @@ def nnkpi_train():
     data = request.json or {}
     train_num = int(data.get("train_num", 5000))
     model_type = str(data.get("model_type", "simple"))
-    res = nn_kpi_handler.start_training(UPLOAD_FOLDER, train_num, model_type=model_type)
+    epochs = data.get("epochs")
+    batch_size = data.get("batch_size")
+    patience = data.get("patience")
+    val_split = data.get("val_split")
+    early_stopping_rounds = data.get("early_stopping_rounds")
+    n_jobs = data.get("n_jobs")
+    fit_intercept = data.get("fit_intercept")
+    res = nn_kpi_handler.start_training(
+        UPLOAD_FOLDER,
+        train_num=train_num,
+        model_type=model_type,
+        epochs=epochs,
+        batch_size=batch_size,
+        patience=patience,
+        val_split=val_split,
+        early_stopping_rounds=early_stopping_rounds,
+        n_jobs=n_jobs,
+        fit_intercept=fit_intercept
+    )
     return jsonify(res)
 
 @app.route("/nnkpi/results", methods=["GET"])
@@ -637,7 +673,20 @@ def nnkpi_optimize():
     target_cost = data.get("target_cost")
     target_cycle = data.get("target_cycle")
     target_waiting = data.get("target_waiting")
-    model_type = data.get("model_type")
+    model_type = data.get("model_type", "simple")
+
+    num_reps = int(data.get("num_reps", 50))
+    num_starts = data.get("num_starts")
+    if num_starts is not None and str(num_starts).strip() != "":
+        num_starts = int(num_starts)
+    else:
+        num_starts = None
+
+    max_z_score = float(data.get("max_z_score", 3.0))
+
+    cost_pct = float(data.get("target_cost_pct", -10.0))
+    cycle_pct = float(data.get("target_cycle_pct", -10.0))
+    wait_pct = float(data.get("target_wait_pct", -10.0))
 
     res = nn_kpi_handler.start_optimization(
         UPLOAD_FOLDER,
@@ -649,7 +698,13 @@ def nnkpi_optimize():
         target_cost=target_cost,
         target_cycle=target_cycle,
         target_waiting=target_waiting,
-        model_type=model_type
+        model_type=model_type,
+        num_reps=num_reps,
+        num_starts=num_starts,
+        max_z_score=max_z_score,
+        cost_pct=cost_pct,
+        cycle_pct=cycle_pct,
+        wait_pct=wait_pct
     )
     return jsonify(res)
 

@@ -22,15 +22,15 @@ class SimulationDataset(Dataset):
     def __len__(self):
         return len(self.X)
     
-    def __getitem__(self, index):
-        return self.X[index], self.y[index]
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
 
 # ==========================================
 # 2. NEURAL NETWORK ARCHITECTURE
 # ==========================================
-class PharmacySurrogate(nn.Module):
+class SurrogateModel(nn.Module):
     def __init__(self, input_size):
-        super(PharmacySurrogate, self).__init__()
+        super(SurrogateModel, self).__init__()
         
         self.shared_entry = nn.Sequential(
             nn.Linear(input_size, 64),
@@ -88,11 +88,15 @@ def inverse_transform_targets_torch(y_scaled, y_mean_tensor, y_scale_tensor):
 # 3. MAIN TRAINING PIPELINE
 # ==========================================
 def main(SOURCE="synthetic", train_num=40000):
+    import os
     DATA_FILE = f"data/{SOURCE}/sim_data_waiting_times.csv"
-    BATCH_SIZE = 64
-    EPOCHS = 2500
-    LEARNING_RATE = 0.5e-3
-    
+    BATCH_SIZE = int(os.environ.get("BATCH_SIZE", 64))
+    EPOCHS = int(os.environ.get("EPOCHS", 2500))
+    PATIENCE = int(os.environ.get("PATIENCE", 200))
+    TEST_SIZE = float(os.environ.get("TEST_SIZE", 0.20))
+    LEARNING_RATE = float(os.environ.get("LEARNING_RATE", 0.5e-3))
+
+    # Pick the best compute device available
     if torch.backends.mps.is_available():
         device = torch.device("mps")
     elif torch.cuda.is_available(): 
@@ -104,33 +108,27 @@ def main(SOURCE="synthetic", train_num=40000):
     print("Loading dataset from source:", SOURCE)
     df = pd.read_csv(DATA_FILE) 
 
-    # 1b. Drop simulation runs that didn't converge -- their KPI estimates
-    # aren't reliable ground truth, so they shouldn't be training targets.
+    # Drop simulation runs that didn't converge.
     n_before = len(df)
     df = df[df[CONVERGENCE_FLAGS].all(axis=1)].reset_index(drop=True)
     print(f"Dropped {n_before - len(df)} unconverged rows ({len(df)} remain).")
 
+    # Create feature and target arrays
     X_df = df.drop(columns=NON_FEATURE_COLS)
     y_df = df[TARGET_COLS]
-
     input_size = X_df.shape[1]
     output_size = y_df.shape[1]
     print(f"Features: {input_size} | Targets: {output_size}")
 
-    # 1c. Log1p the heavy-tailed KPIs so extreme (but real) outlier scenarios
-    # don't dominate the MSE loss once everything is standardized.
+    # Log1p the heavy-tailed KPIs 
     y_raw = y_df.values.astype(np.float64)
     y_log = y_raw.copy()
     y_log[:, LOG_COL_IDX] = np.log1p(y_log[:, LOG_COL_IDX])
 
-    # 2. Split the FULL dataset once to create a universal, locked test set.
-    # Split X, the log-transformed y (used for training), and the raw y
-    # (used later to report real-world-unit metrics) together so indices
-    # stay aligned.
+    # Split the full dataset once to create a universal, locked test set.
     X_train_full, X_test, y_train_full, y_test, _, y_test_raw = train_test_split(
-        X_df.values, y_log, y_raw, test_size=0.2, random_state=42
+        X_df.values, y_log, y_raw, test_size=TEST_SIZE, random_state=42
     )
-
     TRAIN_SAMPLES = train_num 
     
     # 4. Slice the training arrays down to the desired size
@@ -144,19 +142,16 @@ def main(SOURCE="synthetic", train_num=40000):
     x_scaler = StandardScaler()
     y_scaler = StandardScaler()
     
-    # 5. Fit scalers ONLY on the active training subset
+    # 5. Fit scalers for the relevant sets
     X_train_scaled = x_scaler.fit_transform(X_train)
     X_test_scaled = x_scaler.transform(X_test)
     
     y_train_scaled = y_scaler.fit_transform(y_train)
     y_test_scaled = y_scaler.transform(y_test)
 
-    output_dir = Path(f"models/simple_model/output/{SOURCE}")
-    output_dir.mkdir(parents=True, exist_ok=True)
-
     # Save the scalers
-    joblib.dump(x_scaler, output_dir / "x_scaler.pkl")
-    joblib.dump(y_scaler, output_dir / "y_scaler.pkl")
+    joblib.dump(x_scaler, f"models/simple_model/output/{SOURCE}/x_scaler.pkl")
+    joblib.dump(y_scaler, f"models/simple_model/output/{SOURCE}/y_scaler.pkl")
     print("Saved x_scaler.pkl and y_scaler.pkl")
 
     # --- B. DataLoader Setup ---
@@ -167,7 +162,7 @@ def main(SOURCE="synthetic", train_num=40000):
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
     # --- C. Model Initialization ---
-    model = PharmacySurrogate(input_size).to(device)
+    model = SurrogateModel(input_size).to(device)
     criterion = nn.MSELoss() 
     optimizer = optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=1e-3)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS, eta_min=1e-5)
@@ -176,7 +171,7 @@ def main(SOURCE="synthetic", train_num=40000):
     start_time = time.time()
     
     best_test_loss = float('inf')
-    patience = 200
+    patience = PATIENCE
     patience_counter = 0
     
     for epoch in range(EPOCHS):
@@ -204,7 +199,7 @@ def main(SOURCE="synthetic", train_num=40000):
         model.eval()
         test_loss = 0.0
         test_preds_scaled = []
-        
+         
         with torch.no_grad():
             for batch_X, batch_y in test_loader:
                 batch_X, batch_y = batch_X.to(device), batch_y.to(device)
@@ -240,7 +235,7 @@ def main(SOURCE="synthetic", train_num=40000):
                   f"Wait Time: {medae_raw[2]:.1f}s (±{medae_pct[2]:.1f}%)")
             print(f"   ↳ MAE   -> Cost: ${mae_raw[0]:.2f} | Cycle Time: {mae_raw[1]:.1f}s | Wait Time: {mae_raw[2]:.1f}s")
 
-        # --- EARLY STOPPING LOGIC ---
+        # --- Early stopping logic ---
         if test_loss < best_test_loss:
             best_test_loss = test_loss
             patience_counter = 0
@@ -256,7 +251,7 @@ def main(SOURCE="synthetic", train_num=40000):
 
     total_time = time.time() - start_time
     print(f"Training complete in {total_time:.2f} seconds.")
-    print("Saved the BEST trained model weights to surrogate_model.pth")
+    print("Saved the best trained model weights to surrogate_model.pth")
 
     # ==========================================
     # FINAL EVALUATION & JSON EXPORT
@@ -292,6 +287,7 @@ def main(SOURCE="synthetic", train_num=40000):
     metrics = {
         "Data Source": SOURCE,
         "Model Name": "Simple NN",
+        "Train Samples": len(X_train),
         "Best Test Loss": float(best_test_loss),
         "MedAE": {
             "cost": float(medae_kpi[0]), 
@@ -311,6 +307,7 @@ def main(SOURCE="synthetic", train_num=40000):
     }
 
     metrics_file = Path("models/output/metrics_simple_nn.json")
+    metrics_file.parent.mkdir(parents=True, exist_ok=True)
 
     # Load existing metrics if they exist
     if metrics_file.exists():
@@ -319,21 +316,23 @@ def main(SOURCE="synthetic", train_num=40000):
     else:
         all_metrics = []
 
-    # Remove any previous entry for this source + model
+    # Remove any previous entry for this source + model + train_samples
     all_metrics = [
         m for m in all_metrics
         if not (
-            m["Data Source"] == SOURCE
-            and m["Model Name"] == metrics["Model Name"]
+            m.get("Data Source") == SOURCE
+            and m.get("Model Name") == metrics["Model Name"]
+            and m.get("Train Samples") == metrics["Train Samples"]
         )
     ]
 
     # Add the updated metrics
     all_metrics.append(metrics)
-    all_metrics.sort(key=lambda x: x["Data Source"])
+    all_metrics.sort(key=lambda x: (x.get("Data Source", ""), x.get("Model Name", ""), x.get("Train Samples", 0)))
 
     with open(metrics_file, "w") as f:
         json.dump(all_metrics, f, indent=4)
+    print(f"Updated metrics saved to {metrics_file}")
     
 
 if __name__ == "__main__":

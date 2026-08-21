@@ -1,6 +1,6 @@
 import pandas as pd
 
-FILE_PATH = "data/BIMP/sim_data_waiting_times.csv"
+FILE_PATH = "data/real/real.csv"
 
 df= pd.read_csv(FILE_PATH)
 
