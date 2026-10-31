@@ -1,6 +1,6 @@
 # DTLogExtSim
 
-## 🚀 How To Run
+## How To Run
 1. **Install Docker:**  
     Make sure Docker is installed on your system. You can download it from [https://www.docker.com](https://www.docker.com).
 2. **Clone or Download the Project**
